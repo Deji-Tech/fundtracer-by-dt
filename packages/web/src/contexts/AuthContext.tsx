@@ -24,6 +24,7 @@ interface AuthContextType {
     profile: UserProfile | null;
     loading: boolean;
     signIn: () => Promise<void>;
+    signInWithGithub: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
 }
@@ -69,6 +70,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const signInWithGithub = async () => {
+        try {
+            setLoading(true);
+            const { signInWithGithub: firebaseSignInWithGithub } = await import('../firebase');
+            await firebaseSignInWithGithub();
+        } catch (error) {
+            console.error('GitHub Sign-in failed:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const signOutHandler = async () => {
         try {
             await logOut();
@@ -95,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profile,
             loading,
             signIn,
+            signInWithGithub,
             signOut: signOutHandler,
             refreshProfile,
         }}>

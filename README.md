@@ -129,6 +129,21 @@ fundtracer config --set-key YOUR_API_KEY
 fundtracer config --show
 ```
 
+### Authentication Setup
+
+**1. Authorized Domains**
+If Google/GitHub Sign-in fails on Netlify:
+1. Go to Firebase Console > Authentication > Settings > Authorized Domains.
+2. Add your Netlify domain (e.g., `fundtracer-by-dt.netlify.app`).
+
+**2. GitHub Authentication**
+To enable "Sign in with GitHub":
+1. Go to GitHub > Settings > Developer settings > OAuth Apps > New OAuth App.
+2. Set "Authorization callback URL" to: `https://<YOUR-PROJECT-ID>.firebaseapp.com/__/auth/handler`
+3. Copy **Client ID** and **Client Secret**.
+4. Go to Firebase Console > Authentication > Sign-in method > Add new provider > GitHub.
+5. Paste the Client ID and Secret.
+
 ### Netlify Deployment Note
 
 If your build fails with **"Exposed secrets detected"**:

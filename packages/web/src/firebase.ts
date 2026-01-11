@@ -8,6 +8,7 @@ import {
     getAuth,
     signInWithPopup,
     GoogleAuthProvider,
+    GithubAuthProvider,
     signOut,
     onAuthStateChanged,
     User,
@@ -56,6 +57,22 @@ export async function signInWithGoogle(): Promise<User | null> {
         return result.user;
     } catch (error: any) {
         console.error('Sign-in error:', error);
+        throw error;
+    }
+}
+
+// Sign in with GitHub
+export async function signInWithGithub(): Promise<User | null> {
+    if (!auth) {
+        console.error('Firebase not initialized');
+        return null;
+    }
+    try {
+        const githubProvider = new GithubAuthProvider();
+        const result = await signInWithPopup(auth, githubProvider);
+        return result.user;
+    } catch (error: any) {
+        console.error('GitHub Sign-in error:', error);
         throw error;
     }
 }
