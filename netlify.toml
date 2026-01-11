@@ -3,6 +3,9 @@
   publish = "packages/web/dist"
   command = "npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/web"
 
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
