@@ -1,10 +1,17 @@
 [build]
   base = "/"
   publish = "packages/web/dist"
-  command = "npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/web"
+  functions = "packages/server/dist/functions"
+  command = "npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/server && npm run build --workspace=@fundtracer/web"
 
 [build.environment]
   SECRETS_SCAN_ENABLED = "false"
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"
