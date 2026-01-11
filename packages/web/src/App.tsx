@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import { analyzeWallet, compareWallets, analyzeContract } from './api';
 import Header from './components/Header';
 import AuthPanel from './components/AuthPanel';
+import HowToUse from './components/HowToUse';
 import WalletInput from './components/WalletInput';
 import ChainSelector from './components/ChainSelector';
 import EmptyState from './components/EmptyState';
@@ -22,6 +23,7 @@ function App() {
     const [walletAddresses, setWalletAddresses] = useState<string[]>(['']);
     const [contractAddress, setContractAddress] = useState<string>('');
     const [showComingSoon, setShowComingSoon] = useState(false);
+    const [showHowToUse, setShowHowToUse] = useState(false);
 
     // Analysis state
     const [loading, setLoading] = useState(false);
@@ -130,6 +132,9 @@ function App() {
             <main className="main-content">
                 {/* Auth Panel - Shows sign in or user info */}
                 <AuthPanel />
+
+                {/* How To Use Section */}
+                <HowToUse isOpen={showHowToUse} onToggle={() => setShowHowToUse(!showHowToUse)} />
 
                 {/* Only show analysis UI if authenticated */}
                 {user ? (
