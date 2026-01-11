@@ -20,6 +20,14 @@ const PORT = process.env.PORT || 3001;
 
 // Security middleware
 app.use(helmet());
+
+// DEBUG LOGGING - Log every request
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Request: ${req.method} ${req.url}`);
+    console.log(`[DEBUG] Path: ${req.path}`);
+    next();
+});
+
 app.use(cors({
     origin: [
         'http://localhost:5173',
