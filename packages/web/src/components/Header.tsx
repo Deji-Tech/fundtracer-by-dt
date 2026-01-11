@@ -10,13 +10,11 @@ function Header({ onSettingsClick }: HeaderProps) {
         <header className="header">
             <div className="header-inner">
                 <div className="logo">
-                    <div className="logo-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                            <path d="M2 17l10 5 10-5" />
-                            <path d="M2 12l10 5 10-5" />
-                        </svg>
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="Cyber-Nanna"
+                        style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '4px' }}
+                    />
                     <span className="logo-text">FundTracer</span>
                     <span className="logo-subtext">by DT</span>
                 </div>
