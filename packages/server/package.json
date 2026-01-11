@@ -5,7 +5,7 @@
     "type": "module",
     "main": "dist/index.js",
     "scripts": {
-        "build": "tsc && esbuild src/functions/api.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/functions/api.js --external:firebase-admin",
+        "build": "tsc && esbuild src/functions/api.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/functions/api.js",
         "start": "node dist/index.js",
         "dev": "tsx watch src/index.ts"
     },
