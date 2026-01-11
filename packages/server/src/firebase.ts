@@ -1,7 +1,7 @@
-// ============================================================
-// Firebase Admin SDK Initialization
-// ============================================================
-
+/**
+ * Firebase Admin SDK Initialization
+ * Handles server-side authentication verification and Firestore access.
+ */
 import admin from 'firebase-admin';
 
 let firebaseInitialized = false;
