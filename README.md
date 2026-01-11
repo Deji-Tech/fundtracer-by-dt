@@ -1,75 +1,153 @@
 # FundTracer by DT
 
-A professional blockchain forensics and wallet analysis tool designed for identifying suspicious on-chain activity, tracing fund flows, and detecting Sybil behavior across EVM networks.
+<p align="center">
+  <img src="packages/web/public/logo.png" alt="FundTracer Logo" width="200">
+</p>
 
-![FundTracer Dashboard](https://api.screenshotone.com/take?url=http%3A%2F%2Flocalhost%3A5173&access_key=YOUR_KEY) 
+<p align="center">
+  <strong>Blockchain Wallet Forensics & Sybil Detection Tool</strong><br>
+  Trace funding sources, detect suspicious patterns, and identify coordinated wallet behavior.
+</p>
 
-## Core Features
-
-- **Wallet Analysis**: Deep-dive into any EVM address to trace funding sources and destinations.
-- **Contract Analysis**: Analyze contract interactors to identify coordinated behavior and shared funding groups.
-- **Sybil Detection**: Multi-wallet comparison to detect non-organic patterns (wash trading, circular funding, identical funding amounts).
-- **Behavior Profiling**: Advanced heuristics to detect rapid movement, fresh wallet activity, and dust attacks.
-- **Professional Analytics**: Designed with a deep-black forensics aesthetic for a serious, focused experience.
-
-## Tech Stack
-
-- **Monorepo**: npm workspaces
-- **Frontend**: React + Vite + D3.js (Visualizations)
-- **Engine**: TypeScript Core (@fundtracer/core)
-- **Backend**: Express.js + Firebase Admin SDK
-- **Auth**: Google Authentication (Identity Platform)
-- **Security**: Server-side API key management (Protects your Etherscan keys)
-
-## Project Structure
-
-```text
-├── packages/
-│   ├── core/      # Analysis logic, providers, and heuristics
-│   ├── web/       # React dashboard with D3 visualizations
-│   ├── server/    # Secure API server with auth and rate limiting
-│   └── cli/       # Terminal-based analysis tool
-```
-
-## Security Design
-
-FundTracer is designed with security as a priority:
-- **API Hiding**: Etherscan API keys are managed exclusively on the server. The client never sees your keys.
-- **Access Control**: Integrated with Firebase Auth to prevent unauthorized use.
-- **Rate Limiting**: Built-in usage limits (7/day for free users) with support for custom user API keys.
+---
 
 ## Quick Start
 
-### 1. Prerequisites
-- Node.js v18+
-- A [Firebase Project](https://console.firebase.google.com)
-- An [Etherscan API Key](https://etherscan.io/apis)
+### CLI (Terminal)
 
-### 2. Configuration
-Create a `.env` file in `packages/server/`:
-```env
-DEFAULT_ETHERSCAN_API_KEY=your_key
-FIREBASE_PROJECT_ID=your_id
-FIREBASE_CLIENT_EMAIL=your_email
-FIREBASE_PRIVATE_KEY="your_private_key"
-```
-
-Update `packages/web/src/firebase.ts` with your client-side config.
-
-### 3. Installation
 ```bash
+# Clone and install
+git clone https://github.com/Deji-Tech/fundtracer-by-dt.git
+cd fundtracer-by-dt
 npm install
+
+# Build and link CLI globally
+cd packages/cli && npm run build && npm link
+
+# Now just type:
+fundtracer
 ```
 
-### 4. Development
+You'll see a beautiful gradient ASCII banner and an interactive menu:
+
+```
+  ███████╗██╗   ██╗███╗   ██╗██████╗ ████████╗██████╗  █████╗  ██████╗███████╗██████╗ 
+  ██╔════╝██║   ██║████╗  ██║██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██╔════╝██╔══██╗
+  █████╗  ██║   ██║██╔██╗ ██║██║  ██║   ██║   ██████╔╝███████║██║     █████╗  ██████╔╝
+  ██╔══╝  ██║   ██║██║╚██╗██║██║  ██║   ██║   ██╔══██╗██╔══██║██║     ██╔══╝  ██╔══██╗
+  ██║     ╚██████╔╝██║ ╚████║██████╔╝   ██║   ██║  ██║██║  ██║╚██████╗███████╗██║  ██║
+  ╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚═════╝    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝
+
+                              by DT • Blockchain Wallet Forensics Tool
+```
+
+### Web Dashboard
+
 ```bash
-# Start the API server
+# Terminal 1: Start API server
 npm run dev:server
 
-# Start the web dashboard
+# Terminal 2: Start web app
 npm run dev
 ```
 
-## Credits
+Visit `http://localhost:5173` and sign in with Google.
 
-Developed by **DT Development**. Licensed under MIT.
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Wallet Analysis** | Deep-dive into any EVM address to trace funding sources and destinations |
+| **Sybil Detection** | Compare multiple wallets to find shared funding patterns |
+| **Contract Analysis** | Analyze contract interactors for coordinated behavior |
+| **Risk Scoring** | Automatic detection of suspicious activity with 0-100 risk score |
+
+## What We Detect
+
+- Rapid fund movement (flash loans, MEV bots)
+- Same-block transactions (bot activity)
+- Circular fund flows (wash trading)
+- Sybil farming patterns (shared funding sources)
+- Fresh wallet with unusually high activity
+- Dust attacks
+
+---
+
+## Project Structure
+
+```
+fundtracer-by-dt/
+├── packages/
+│   ├── core/      # Analysis engine, providers, detection algorithms
+│   ├── web/       # React dashboard with D3 visualizations
+│   ├── server/    # Express API with Firebase auth
+│   └── cli/       # Terminal tool with ASCII banner
+```
+
+## Supported Chains
+
+| Chain | Status |
+|-------|--------|
+| Ethereum | Supported |
+| Linea | Supported |
+| Arbitrum | Supported |
+| Base | Supported |
+| Optimism | Coming Soon |
+| Polygon | Coming Soon |
+
+---
+
+## Configuration
+
+### Environment Variables
+
+**Server** (`packages/server/.env`):
+```env
+DEFAULT_ETHERSCAN_API_KEY=your_key
+FIREBASE_PROJECT_ID=your_project
+FIREBASE_CLIENT_EMAIL=your_email
+FIREBASE_PRIVATE_KEY="your_key"
+```
+
+**Web** (`packages/web/.env`):
+```env
+VITE_FIREBASE_API_KEY=your_key
+VITE_FIREBASE_AUTH_DOMAIN=your_domain
+VITE_FIREBASE_PROJECT_ID=your_project
+VITE_API_URL=http://localhost:3001
+```
+
+### CLI Configuration
+
+```bash
+# Set your Etherscan API key
+fundtracer config --set-key YOUR_API_KEY
+
+# Verify
+fundtracer config --show
+```
+
+---
+
+## Usage Limits
+
+- **Free tier**: 7 analyses per day
+- **Custom API key**: Unlimited (add your own Etherscan key)
+
+---
+
+## Tech Stack
+
+- **Frontend**: React + Vite + D3.js
+- **Backend**: Express + Firebase Admin SDK
+- **Auth**: Google Sign-in (Firebase)
+- **CLI**: Commander + Inquirer + Chalk
+- **Analysis**: Custom TypeScript engine
+
+---
+
+## License
+
+MIT License - Built by **DT Development**
