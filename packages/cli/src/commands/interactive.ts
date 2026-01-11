@@ -1,6 +1,7 @@
-// ============================================================
-// FundTracer CLI - Interactive Mode
-// ============================================================
+/**
+ * FundTracer CLI - Interactive Mode
+ * Full REPL experience for blockchain forensics.
+ */
 
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -9,26 +10,31 @@ import { analyzeCommand } from './analyze.js';
 import { compareCommand } from './compare.js';
 
 export async function interactiveCommand() {
-    console.log(chalk.cyan('\nWelcome to FundTracer Interactive Mode!\n'));
-
     while (true) {
         const { action } = await inquirer.prompt([
             {
                 type: 'list',
                 name: 'action',
-                message: 'What would you like to do?',
+                message: chalk.cyan('>'),
+                prefix: '',
                 choices: [
-                    { name: '🔍 Analyze a wallet', value: 'analyze' },
-                    { name: '🔗 Compare multiple wallets', value: 'compare' },
-                    { name: '⚙️  Configure settings', value: 'config' },
-                    { name: '❌ Exit', value: 'exit' },
+                    { name: 'Analyze a wallet', value: 'analyze' },
+                    { name: 'Compare multiple wallets (Sybil detection)', value: 'compare' },
+                    { name: 'Configure API key', value: 'config' },
+                    { name: 'Help', value: 'help' },
+                    { name: 'Exit', value: 'exit' },
                 ],
             },
         ]);
 
         if (action === 'exit') {
-            console.log(chalk.dim('\nGoodbye! 👋\n'));
+            console.log(chalk.dim('\nSession ended.\n'));
             process.exit(0);
+        }
+
+        if (action === 'help') {
+            showHelp();
+            continue;
         }
 
         switch (action) {
@@ -43,8 +49,28 @@ export async function interactiveCommand() {
                 break;
         }
 
-        console.log('\n');
+        console.log('');
     }
+}
+
+function showHelp() {
+    console.log(`
+${chalk.white.bold('Available Commands:')}
+
+  ${chalk.cyan('analyze <address>')}    Analyze a single wallet's funding sources
+  ${chalk.cyan('compare <addr1> <addr2>')}  Compare wallets for shared funding (Sybil)
+  ${chalk.cyan('config --set-key KEY')}  Set your Etherscan API key
+
+${chalk.white.bold('Detection Capabilities:')}
+
+  - Rapid fund movement (flash loans, MEV)
+  - Same-block transactions (bot activity)
+  - Circular fund flows (wash trading)
+  - Sybil farming patterns
+  - Fresh wallet with high activity
+
+${chalk.dim('For more: https://github.com/Deji-Tech/fundtracer-by-dt')}
+`);
 }
 
 async function interactiveAnalyze() {
