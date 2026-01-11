@@ -1,8 +1,8 @@
 [build]
   base = "/"
   publish = "packages/web/dist"
-  functions = "packages/server/dist/functions"
-  command = "npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/server && npm run build --workspace=@fundtracer/web"
+  functions = "netlify/functions"
+  command = "npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/server && npm run build --workspace=@fundtracer/web && mkdir -p netlify/functions && cp packages/server/dist/functions/api.js netlify/functions/api.js"
 
 [build.environment]
   SECRETS_SCAN_ENABLED = "false"
