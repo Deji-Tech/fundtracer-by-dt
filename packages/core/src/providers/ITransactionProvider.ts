@@ -38,6 +38,9 @@ export interface ITransactionProvider {
     /** Get first funder of an address */
     getFirstFunder(address: string): Promise<FundingNode | null>;
 
+    /** Get contract code */
+    getCode(address: string): Promise<string>;
+
     /** Clear cache (optional) */
     clearCache?(): void;
 }

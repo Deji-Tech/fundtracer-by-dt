@@ -178,19 +178,24 @@ export abstract class BaseProvider {
         });
     }
 
-    /** Check if address is a contract */
-    async isContract(address: string): Promise<boolean> {
+    /** Get contract code */
+    async getCode(address: string): Promise<string> {
         try {
-            const code = await this.request<string>({
+            return await this.request<string>({
                 module: 'proxy',
                 action: 'eth_getCode',
                 address,
                 tag: 'latest',
             });
-            return code !== '0x';
         } catch {
-            return false;
+            return '0x';
         }
+    }
+
+    /** Check if address is a contract */
+    async isContract(address: string): Promise<boolean> {
+        const code = await this.getCode(address);
+        return code !== '0x';
     }
 
     /** Get wallet info */

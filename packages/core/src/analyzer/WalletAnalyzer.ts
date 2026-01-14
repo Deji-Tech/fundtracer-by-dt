@@ -74,6 +74,11 @@ export class WalletAnalyzer {
             walletInfo.isInfrastructure = true;
             walletInfo.infrastructureType = 'high_volume';
             walletInfo.label = 'High Activity (Possible Infrastructure)';
+        } else if (walletInfo.isContract && walletInfo.txCount > 10000) {
+            // Heuristic: Contracts with high volume are likely infrastructure/dapps
+            walletInfo.isInfrastructure = true;
+            walletInfo.infrastructureType = 'high_volume_contract';
+            walletInfo.label = 'High Activity Contract';
         }
 
         // Progress update

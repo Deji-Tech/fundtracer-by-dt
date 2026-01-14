@@ -163,6 +163,15 @@ export class AlchemyProvider {
         return response.data.result;
     }
 
+    /** Get contract code */
+    async getCode(address: string): Promise<string> {
+        try {
+            return await this.rpcRequest<string>('eth_getCode', [address, 'latest']);
+        } catch {
+            return '0x';
+        }
+    }
+
     /** Get wallet info (balance and tx count) */
     async getWalletInfo(address: string): Promise<WalletInfo> {
         const cacheKey = `walletInfo:${address}`;

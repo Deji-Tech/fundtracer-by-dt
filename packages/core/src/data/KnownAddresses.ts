@@ -27,10 +27,32 @@ export const KNOWN_ADDRESSES: Record<string, Record<string, KnownAddress>> = {
         '0x71660c4005ba85c37ccec55d0c4493e66fe775d3': { name: 'Coinbase 1', type: 'exchange', category: 'cex' },
     },
     'linea': {
-        // Linea Message Service / Bridges
-        '0x508ca82df566dcd1b0de8296e70a96313eda5665': { name: 'Linea Message Service', type: 'bridge' },
-        '0xde94...7106': { name: 'Linea Official Bridge', type: 'bridge' }, // Placeholder, often dynamic
-        // Common tokens that might appear as large value transfers if native value bug persists (fixed now, but good to label)
+        // Bridges
+        '0x2fc617e933a52713247ce25730f6695920b3befe': { name: 'Layerswap: Bridge', type: 'bridge' },
+        '0x353012dc4a9a6cf55c941badc267f82004a8ceb9': { name: 'Linea: L2 Token Bridge', type: 'bridge' },
+        '0x508ca82df566dcd1b0de8296e70a96332cd644ec': { name: 'Linea: L2 Message Service', type: 'bridge' },
+        '0x508ca82df566dcd1b0de8296e70a96313eda5665': { name: 'Linea: Message Service (Old)', type: 'bridge' },
+        '0xde94a613d2a01297e6878e1b65fd32f310d57106': { name: 'Linea: Official Bridge', type: 'bridge' },
+        '0x41d3d33156ae7c62c094aae2995003ae63f587b3': { name: 'Orbiter Finance: Bridge', type: 'bridge' },
+        '0x3bdb03ad7363152dfbc185ee23ebc93f0cf93fd2': { name: 'Orbiter Finance: Bridge 6', type: 'bridge' },
+        '0x81f6138153d473e8c5ecebd3dc8cd4903506b075': { name: 'Stargate: Pool Native', type: 'bridge' },
+        '0x7e63a5f1a8f0b4d0934b2f2327daed3f6bb2ee75': { name: 'Across: Linea SpokePool', type: 'bridge' },
+        '0x1a44076050125825900e736c501f859c50fe728c': { name: 'LayerZero: EndpointV2', type: 'bridge' },
+        '0x45a318273749d6eb00f5f6ca3bc7cd3de26d642a': { name: 'Owlto Finance: Bridge', type: 'bridge' },
+        '0x549feb73f2348f6cd99b9fc8c69252034897f06c': { name: 'Chainlink: CCIP Router', type: 'bridge' },
+        '0x1b0dc9cb7eadda36f4ccfb8130b0ad967b0a3508': { name: 'Everclear: Fee Adapter', type: 'bridge' },
+        '0x1650683e50e075efc778be4d1a6be929f3831719': { name: 'Pheasant Network: Relayer', type: 'bridge' },
+        '0x2796317b0ff8538f253012862c06787adfb8ceb6': { name: 'Synapse: Bridge', type: 'bridge' },
+
+        // Exchanges
+        '0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be': { name: 'Binance: Hot Wallet', type: 'exchange', category: 'cex' },
+        '0xd3d7dbe73bbdd5a5c7a49ca322763c4d400fc240': { name: 'OKX: Hot Wallet', type: 'exchange', category: 'cex' },
+        '0x0ba37936c50bbcdc7130c67d931e5fe14285b8eb': { name: 'OKX: Hot Wallet 2', type: 'exchange', category: 'cex' },
+        '0xf89d7b9c864f589bbf53a82105107622b35eaa40': { name: 'Bybit: Hot Wallet', type: 'exchange', category: 'cex' },
+        '0xc882b111a75c0c657fc507c04fbfcd2cc984f071': { name: 'Gate.io: Hot Wallet', type: 'exchange', category: 'cex' },
+        '0x4b68038e910941b7438e70a3943dcc4fd543715c': { name: 'MEXC: Hot Wallet', type: 'exchange', category: 'cex' },
+        '0x2b5634c42055806a59e9107ed44d43c426e58258': { name: 'KuCoin: Hot Wallet', type: 'exchange', category: 'cex' },
+        '0xe80623a9d41f2f05780d9cd9cea0f797fd53062a': { name: 'Bitget: Hot Wallet', type: 'exchange', category: 'cex' },
     },
     'arbitrum': {
         '0x0000000000000000000000000000000000000064': { name: 'ArbSys', type: 'contract' },
