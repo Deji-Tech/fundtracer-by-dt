@@ -13,6 +13,7 @@ import MultiWalletView from './components/MultiWalletView';
 import ContractAnalysisView, { ContractAnalysisResult } from './components/ContractAnalysisView';
 import ComingSoonModal from './components/ComingSoonModal';
 import SybilDetector from './components/SybilDetector';
+import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 
 type ViewMode = 'wallet' | 'contract' | 'compare' | 'sybil';
 
@@ -25,6 +26,7 @@ function App() {
     const [contractAddress, setContractAddress] = useState<string>('');
     const [showComingSoon, setShowComingSoon] = useState(false);
     const [showHowToUse, setShowHowToUse] = useState(false);
+    const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
 
     // Analysis state
     const [loading, setLoading] = useState(false);
@@ -415,10 +417,33 @@ function App() {
                 ) : null}
             </main>
 
-            {/* Coming Soon Modal */}
+            {/* Footer */}
+            <footer style={{
+                padding: 'var(--space-4)',
+                textAlign: 'center',
+                color: 'var(--color-text-muted)',
+                borderTop: '1px solid var(--color-border)',
+                marginTop: 'auto',
+                fontSize: 'var(--text-sm)',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 'var(--space-4)'
+            }}>
+                <span>&copy; {new Date().getFullYear()} FundTracer by DT</span>
+                <span style={{ color: 'var(--color-border)' }}>|</span>
+                <button
+                    onClick={() => setShowPrivacyPolicy(true)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                    Privacy Policy
+                </button>
+            </footer>
+
+            {/* Modals */}
             {showComingSoon && (
                 <ComingSoonModal onClose={() => setShowComingSoon(false)} />
             )}
+            <PrivacyPolicyModal isOpen={showPrivacyPolicy} onClose={() => setShowPrivacyPolicy(false)} />
         </div>
     );
 }
