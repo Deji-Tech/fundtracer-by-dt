@@ -60,8 +60,8 @@ initializeFirebase();
 // Start Payment Listener
 new PaymentListener().start();
 
-console.log('[DEBUG] Default API Key Present:', !!process.env.DEFAULT_ETHERSCAN_API_KEY);
-console.log('[DEBUG] Default API Key Length:', process.env.DEFAULT_ETHERSCAN_API_KEY?.length);
+console.log('[DEBUG] Default Alchemy API Key Present:', !!process.env.DEFAULT_ALCHEMY_API_KEY);
+console.log('[DEBUG] Default Alchemy API Key Length:', process.env.DEFAULT_ALCHEMY_API_KEY?.length);
 
 // Health check (public)
 app.get('/health', (req, res) => {
