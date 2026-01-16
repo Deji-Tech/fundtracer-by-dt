@@ -3,10 +3,10 @@
     "version": "1.0.0",
     "description": "FundTracer API Server - Handles auth, rate limiting, and secure API key management",
     "type": "module",
-    "main": "dist/index.js",
+    "main": "dist/packages/server/src/index.js",
     "scripts": {
         "build": "tsc && esbuild src/functions/api.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/functions/api.js --external:firebase-admin",
-        "start": "node dist/index.js",
+        "start": "node dist/packages/server/src/index.js",
         "dev": "tsx watch src/index.ts"
     },
     "dependencies": {
