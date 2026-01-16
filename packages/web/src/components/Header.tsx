@@ -1,13 +1,14 @@
 import React from 'react';
-import { Settings, Github, Mail, Zap } from 'lucide-react';
+import { Settings, Github, Mail, Zap, MessageSquare } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 interface HeaderProps {
     onSettingsClick?: () => void;
     onUpgradeClick?: () => void;
+    onFeedbackClick?: () => void;
 }
 
-function Header({ onSettingsClick, onUpgradeClick }: HeaderProps) {
+function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick }: HeaderProps) {
     return (
         <header className="header">
             <div className="header-inner">
@@ -30,6 +31,16 @@ function Header({ onSettingsClick, onUpgradeClick }: HeaderProps) {
                             title="Upgrade to Premium"
                         >
                             <Zap size={14} /> Upgrade
+                        </button>
+                    )}
+                    {onFeedbackClick && (
+                        <button
+                            className="btn btn-ghost btn-icon"
+                            onClick={onFeedbackClick}
+                            aria-label="Feedback"
+                            title="Send Feedback"
+                        >
+                            <MessageSquare size={18} />
                         </button>
                     )}
                     <a
@@ -65,4 +76,5 @@ function Header({ onSettingsClick, onUpgradeClick }: HeaderProps) {
 }
 
 export default Header;
+
 

@@ -15,6 +15,7 @@ import ComingSoonModal from './components/ComingSoonModal';
 import SybilDetector from './components/SybilDetector';
 import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import OnboardingModal from './components/OnboardingModal';
+import FeedbackModal from './components/FeedbackModal';
 
 type ViewMode = 'wallet' | 'contract' | 'compare' | 'sybil';
 
@@ -30,6 +31,7 @@ function App() {
     const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showPricing, setShowPricing] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(false);
 
     // Analysis state
     const [loading, setLoading] = useState(false);
@@ -225,6 +227,7 @@ function App() {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onUpgradeClick={() => setShowPricing(true)}
+                onFeedbackClick={() => setShowFeedback(true)}
             />
 
             <main className="main-content">
@@ -452,6 +455,7 @@ function App() {
             {showPricing && (
                 <OnboardingModal isOpen={true} onClose={() => setShowPricing(false)} />
             )}
+            <FeedbackModal isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
         </div>
     );
 }
