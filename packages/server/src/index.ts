@@ -41,13 +41,7 @@ console.log('[DEBUG] Serving static files from:', webDistPath);
 
 app.use(express.static(webDistPath));
 
-// Fallback for SPA routing
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    res.sendFile(path.join(webDistPath, 'index.html'));
-});
+
 
 app.use(cors({
     origin: [
@@ -90,6 +84,14 @@ apiRouter.use('/dune', authMiddleware, duneRoutes);
 // Mount router at both /api (for local dev) and root (for Netlify environment where /api might be stripped)
 app.use('/api', apiRouter);
 app.use('/', apiRouter);
+
+// Fallback for SPA routing - MUST BE LAST
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(webDistPath, 'index.html'));
+});
 
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

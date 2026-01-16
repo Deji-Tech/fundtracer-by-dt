@@ -41,22 +41,33 @@ router.post('/login', async (req: Request, res: Response) => {
         // Check Linea PoH
         let isVerified = false;
         try {
-            console.log('[AUTH] Calling PoH API...');
-            const response = await fetch(`https://poh-api.linea.build/poh/v2/${address}`);
-            const text = await response.text(); // Get text first
+            console.log(`[AUTH] Calling PoH API for ${address.toLowerCase()}...`);
+            const pohUrl = `https://poh-api.linea.build/poh/v2/${address.toLowerCase()}`; // Force lowercase
+            const response = await fetch(pohUrl);
+            const text = await response.text();
             console.log(`[AUTH] PoH Raw Response: ${text}`);
 
             try {
-                const data = JSON.parse(text);
-                // Handle { poh: boolean } OR plain boolean
-                if (typeof data === 'boolean') {
-                    isVerified = data;
-                } else if (typeof data === 'object' && data !== null && 'poh' in data) {
-                    isVerified = data.poh === true;
+                // Handle plain boolean "true" string
+                if (text.trim() === 'true') {
+                    isVerified = true;
+                } else if (text.trim() === 'false') {
+                    isVerified = false;
+                } else {
+                    const data = JSON.parse(text);
+                    // Handle { poh: boolean } OR plain boolean
+                    if (typeof data === 'boolean') {
+                        isVerified = data;
+                    } else if (typeof data === 'object' && data !== null && 'poh' in data) {
+                        isVerified = data.poh === true;
+                    }
                 }
             } catch (e) {
                 console.error('[AUTH] Failed to parse PoH JSON:', e);
-                // Default to false
+                // Last ditch: check if text contains "poh":true
+                if (text.includes('"poh":true') || text.includes('"poh": true')) {
+                    isVerified = true;
+                }
             }
         } catch (poHError) {
             console.error('[AUTH] PoH API Error:', poHError);
