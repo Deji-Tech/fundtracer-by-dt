@@ -12,7 +12,7 @@ import {
     ChainId,
     FilterOptions
 } from '@fundtracer/core';
-import { DuneService } from '../services/DuneService';
+import { DuneService } from '../services/DuneService.js';
 
 const router = Router();
 
