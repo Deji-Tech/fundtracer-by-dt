@@ -60,7 +60,33 @@ apiRouter.use('/dune', authMiddleware, duneRoutes);
 
 // Mount router at both /api (for local dev) and root (for Netlify environment where /api might be stripped)
 app.use('/api', apiRouter);
-app.use('/', apiRouter);
+
+// Serve Static Frontend (for single-container deployment)
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Path to packages/web/dist relative to packages/server/dist/packages/server/src/index.js
+// We need to go up 5 levels to reach root, then down to packages/web/dist
+// Dist structure: root/dist/packages/server/src/index.js
+// Web dist: root/packages/web/dist (IF built separately?) 
+// OR root/dist/packages/web/dist (if build output is merged?)
+// Let's assume standard monorepo structure where web is built to its own dist
+// Actually, if we use "npm run build --workspaces", web builds to packages/web/dist
+
+const webDistPath = path.join(__dirname, '../../../../../../packages/web/dist');
+
+app.use(express.static(webDistPath));
+
+// Fallback for SPA routing - serve index.html for non-API routes
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(webDistPath, 'index.html'));
+});
 
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
