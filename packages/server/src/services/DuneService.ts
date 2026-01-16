@@ -1,4 +1,4 @@
-
+import fetch from 'node-fetch';
 
 export class DuneService {
     private apiKey: string;

@@ -14,9 +14,10 @@ function Header({ onSettingsClick }: HeaderProps) {
                     <img
                         src={logo}
                         alt="FundTracer"
-                        style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '8px' }}
+                        className="logo-img-blend"
+                        style={{ width: '32px', height: '32px', objectFit: 'contain', borderRadius: '4px' }}
                     />
-                    <span className="logo-text">FundTracer</span>
+                    <span className="logo-text">FundTracer <span className="beta-tag">BETA</span></span>
                     <span className="logo-subtext">by DT</span>
                 </div>
 

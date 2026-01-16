@@ -1,30 +1,17 @@
+
 // ============================================================
 // Auth Context - Provides auth state throughout the app
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from 'firebase/auth';
-import { onAuthChange, signInWithGoogle, logOut, getIdToken } from '../firebase';
-import { getProfile } from '../api';
-
-interface UserProfile {
-    uid: string;
-    email: string;
-    name?: string;
-    hasCustomApiKey: boolean;
-    usage: {
-        today: number;
-        limit: number | 'unlimited';
-        remaining: number | 'unlimited';
-    };
-}
+import { BrowserProvider } from 'ethers';
+import { getProfile, loginWithWallet, removeAuthToken, getAuthToken, UserProfile } from '../api';
 
 interface AuthContextType {
-    user: User | null;
+    user: { address: string } | null;
     profile: UserProfile | null;
     loading: boolean;
     signIn: () => Promise<void>;
-    signInWithGithub: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
 }
@@ -32,77 +19,76 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<{ address: string } | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthChange(async (firebaseUser) => {
-            setUser(firebaseUser);
+        checkAuth();
+    }, []);
 
-            if (firebaseUser) {
-                try {
-                    const userProfile = await getProfile();
-                    setProfile(userProfile);
-                } catch (error) {
-                    console.error('Failed to fetch profile:', error);
-                    // Fallback to basic profile so UI doesn't look broken
-                    // This allows users to see the dashboard even if the API is momentarily down
-                    setProfile({
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email || '',
-                        name: firebaseUser.displayName || undefined,
-                        hasCustomApiKey: false,
-                        usage: {
-                            today: 0,
-                            limit: 7, // Assume free tier
-                            remaining: 7
-                        }
-                    });
-                }
-            } else {
+    const checkAuth = async () => {
+        const token = getAuthToken();
+        if (token) {
+            try {
+                // Determine address from profile fetch
+                const userProfile = await getProfile();
+                setProfile(userProfile);
+                setUser({ address: userProfile.email }); // Email field holds address
+            } catch (error) {
+                console.error('Failed to restore session:', error);
+                removeAuthToken();
+                setUser(null);
                 setProfile(null);
             }
-
-            setLoading(false);
-        });
-
-        return unsubscribe;
-    }, []);
+        }
+        setLoading(false);
+    };
 
     const signIn = async () => {
         try {
             setLoading(true);
-            await signInWithGoogle();
-        } catch (error) {
-            console.error('Sign-in failed:', error);
+
+            if (!(window as any).ethereum) {
+                alert('Please install MetaMask or a compatible wallet!');
+                setLoading(false);
+                return;
+            }
+
+            const provider = new BrowserProvider((window as any).ethereum);
+            const signer = await provider.getSigner();
+            const address = await signer.getAddress();
+
+            const message = `Login to FundTracer\nTimestamp: ${Date.now()}`;
+            const signature = await signer.signMessage(message);
+
+            const loginResponse = await loginWithWallet(address, signature, message);
+
+            // Use data from login response which includes isVerified
+            setUser({ address });
+
+            // Fetch full profile (includes usage limits)
+            const userProfile = await getProfile();
+            // Merge login response data to ensure isVerified is correct
+            setProfile({
+                ...userProfile,
+                isVerified: loginResponse.user.isVerified,
+                tier: loginResponse.user.tier
+            });
+
+        } catch (error: any) {
+            console.error('Wallet Sign-in failed:', error);
+            alert(`Login failed: ${error.message}`);
             throw error;
         } finally {
             setLoading(false);
         }
     };
 
-    const signInWithGithub = async () => {
-        try {
-            setLoading(true);
-            const { signInWithGithub: firebaseSignInWithGithub } = await import('../firebase');
-            await firebaseSignInWithGithub();
-        } catch (error) {
-            console.error('GitHub Sign-in failed:', error);
-            throw error;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const signOutHandler = async () => {
-        try {
-            await logOut();
-            setProfile(null);
-        } catch (error) {
-            console.error('Sign-out failed:', error);
-            throw error;
-        }
+    const signOut = async () => {
+        removeAuthToken();
+        setUser(null);
+        setProfile(null);
     };
 
     const refreshProfile = async () => {
@@ -121,8 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profile,
             loading,
             signIn,
-            signInWithGithub,
-            signOut: signOutHandler,
+            signOut,
             refreshProfile,
         }}>
             {children}

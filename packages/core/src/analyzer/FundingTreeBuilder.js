@@ -1,6 +1,7 @@
 // ============================================================
 // FundTracer by DT - Funding Tree Builder
 // ============================================================
+import { getAddressInfo } from '../data/KnownAddresses.js';
 const DEFAULT_CONFIG = {
     maxDepth: 5, // Balanced depth for complete but timely analysis
     direction: 'both',
@@ -45,6 +46,15 @@ export class FundingTreeBuilder {
             return node;
         }
         this.visitedAddresses.add(normalizedAddr);
+        // Check for infrastructure address (Bridge, Exchange, etc)
+        // If identified, we stop tracing deeper as these are terminal nodes for Sybil analysis
+        const infraInfo = getAddressInfo(normalizedAddr, this.provider.chainId);
+        if (infraInfo) {
+            node.isInfrastructure = true;
+            node.label = infraInfo.name;
+            // Stop recursion for infrastructure
+            return node;
+        }
         // Report progress
         if (this.onProgress) {
             this.onProgress({
@@ -60,10 +70,11 @@ export class FundingTreeBuilder {
                 timeRange: config.timeRange,
                 minValue: config.minValueEth,
             });
-            // Filter by direction
+            // Filter by direction AND only native ETH transfers (not tokens which have different value scales)
+            const isEthTransfer = (tx) => tx.category === 'transfer' || tx.category === 'contract_call';
             const relevantTxs = direction === 'source'
-                ? txs.filter(tx => tx.isIncoming && tx.valueInEth > 0)
-                : txs.filter(tx => !tx.isIncoming && tx.valueInEth > 0);
+                ? txs.filter(tx => tx.isIncoming && tx.valueInEth > 0 && isEthTransfer(tx))
+                : txs.filter(tx => !tx.isIncoming && tx.valueInEth > 0 && isEthTransfer(tx));
             // Aggregate by counterparty
             const counterpartyMap = new Map();
             for (const tx of relevantTxs) {
@@ -106,7 +117,11 @@ export class FundingTreeBuilder {
             node.totalValue = (node.totalValueInEth * 1e18).toString();
         }
         catch (error) {
-            console.error(`Error building tree for ${normalizedAddr}:`, error);
+            // Log only a brief error message, not full stack trace
+            const msg = error?.response?.status === 429
+                ? 'Rate limited by API'
+                : (error?.message || 'Unknown error');
+            console.error(`[${normalizedAddr.slice(0, 10)}...] Skipped: ${msg}`);
         }
         return node;
     }

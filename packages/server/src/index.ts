@@ -43,6 +43,10 @@ app.use(express.json({ limit: '10mb' })); // Increased for large wallet lists
 // Initialize Firebase Admin
 initializeFirebase();
 
+// Start Payment Listener
+import { PaymentListener } from './services/PaymentListener.js';
+new PaymentListener().start();
+
 console.log('[DEBUG] Default API Key Present:', !!process.env.DEFAULT_ETHERSCAN_API_KEY);
 console.log('[DEBUG] Default API Key Length:', process.env.DEFAULT_ETHERSCAN_API_KEY?.length);
 
@@ -54,39 +58,19 @@ app.get('/health', (req, res) => {
 // Protected routes
 // Create a main router
 const apiRouter = express.Router();
+import { authRoutes } from './routes/auth.js';
+
+// ... (existing imports)
+
+// Mount router at both /api (for local dev) and root (for Netlify environment where /api might be stripped)
 apiRouter.use('/user', authMiddleware, userRoutes);
+apiRouter.use('/auth', authRoutes); // Public auth route
 apiRouter.use('/analyze', authMiddleware, usageMiddleware, analyzeRoutes);
 apiRouter.use('/dune', authMiddleware, duneRoutes);
 
 // Mount router at both /api (for local dev) and root (for Netlify environment where /api might be stripped)
 app.use('/api', apiRouter);
-
-// Serve Static Frontend (for single-container deployment)
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Path to packages/web/dist relative to packages/server/dist/packages/server/src/index.js
-// We need to go up 5 levels to reach root, then down to packages/web/dist
-// Dist structure: root/dist/packages/server/src/index.js
-// Web dist: root/packages/web/dist (IF built separately?) 
-// OR root/dist/packages/web/dist (if build output is merged?)
-// Let's assume standard monorepo structure where web is built to its own dist
-// Actually, if we use "npm run build --workspaces", web builds to packages/web/dist
-
-const webDistPath = path.join(__dirname, '../../../../../../packages/web/dist');
-
-app.use(express.static(webDistPath));
-
-// Fallback for SPA routing - serve index.html for non-API routes
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    res.sendFile(path.join(webDistPath, 'index.html'));
-});
+app.use('/', apiRouter);
 
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

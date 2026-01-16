@@ -2,13 +2,15 @@
 // API Client - Communicates with FundTracer Server
 // ============================================================
 
-import { getIdToken } from './firebase';
 import { ChainId, AnalysisResult, MultiWalletResult } from '@fundtracer/core';
 
 // In production, assume the API is on the same domain if not specified (e.g., via proxy)
 // Or use a hardcoded production URL if frontend/backend are separate
 // In production, endpoints already include '/api' prefix, so base should be empty
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3001');
+const API_BASE = import.meta.env.VITE_API_URL ||
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3001'
+        : '');
 
 interface ApiResponse<T> {
     success: boolean;
@@ -18,11 +20,13 @@ interface ApiResponse<T> {
     usageRemaining?: number | 'unlimited';
 }
 
-interface UserProfile {
+export interface UserProfile {
     uid: string;
     email: string;
     name?: string;
     hasCustomApiKey: boolean;
+    tier?: 'free' | 'pro' | 'max';
+    isVerified?: boolean;
     usage: {
         today: number;
         limit: number | 'unlimited';
@@ -30,33 +34,57 @@ interface UserProfile {
     };
 }
 
+// Token management
+export const getAuthToken = () => localStorage.getItem('fundtracer_token');
+export const setAuthToken = (token: string) => localStorage.setItem('fundtracer_token', token);
+export const removeAuthToken = () => localStorage.removeItem('fundtracer_token');
+
 async function apiRequest<T>(
     endpoint: string,
     method: 'GET' | 'POST' | 'DELETE' = 'GET',
     body?: any
 ): Promise<T> {
-    const token = await getIdToken();
+    const token = getAuthToken();
 
-    if (!token) {
+    if (!token && endpoint !== '/api/auth/login') { // Allow login without token
         throw new Error('Not authenticated');
+    }
+
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
         method,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
+        headers,
         body: body ? JSON.stringify(body) : undefined,
     });
 
     const data = await response.json();
 
     if (!response.ok) {
+        if (response.status === 401) {
+            removeAuthToken();
+            window.location.reload(); // Force re-login
+        }
         const errorMessage = data.details || data.message || data.error || 'Request failed';
         throw new Error(errorMessage);
     }
 
+    return data;
+}
+
+export async function loginWithWallet(address: string, signature: string, message: string): Promise<{ token: string, user: any }> {
+    const data = await apiRequest<{ token: string, user: any }>('/api/auth/login', 'POST', {
+        address,
+        signature,
+        message
+    });
+    setAuthToken(data.token);
     return data;
 }
 

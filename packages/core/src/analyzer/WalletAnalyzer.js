@@ -4,6 +4,7 @@
 import { FundingTreeBuilder } from './FundingTreeBuilder.js';
 import { SuspiciousDetector } from './SuspiciousDetector.js';
 import { ProviderFactory } from '../providers/ProviderFactory.js';
+import { getAddressInfo } from '../data/KnownAddresses.js';
 // Known contract addresses for project identification
 const KNOWN_PROJECTS = {
     '0x7a250d5630b4cf539739df2c5dacb4c659f2488d': { name: 'Uniswap V2 Router', category: 'defi' },
@@ -32,6 +33,25 @@ export class WalletAnalyzer {
         this.reportProgress('Fetching wallet info', 1, 6, 'Getting basic wallet information...');
         // Get wallet info
         const walletInfo = await provider.getWalletInfo(normalizedAddr);
+        // Detect if this wallet itself is infrastructure
+        const knownInfo = getAddressInfo(normalizedAddr, chainId);
+        if (knownInfo) {
+            walletInfo.isInfrastructure = true;
+            walletInfo.infrastructureType = knownInfo.type;
+            walletInfo.label = knownInfo.name;
+        }
+        else if (walletInfo.txCount > 50000) {
+            // Heuristic: Very high transaction count = likely infrastructure/bot
+            walletInfo.isInfrastructure = true;
+            walletInfo.infrastructureType = 'high_volume';
+            walletInfo.label = 'High Activity (Possible Infrastructure)';
+        }
+        else if (walletInfo.isContract && walletInfo.txCount > 10000) {
+            // Heuristic: Contracts with high volume are likely infrastructure/dapps
+            walletInfo.isInfrastructure = true;
+            walletInfo.infrastructureType = 'high_volume_contract';
+            walletInfo.label = 'High Activity Contract';
+        }
         // Progress update
         this.reportProgress('Fetching transactions', 2, 6, 'Retrieving transaction history...');
         // Get all transactions
@@ -62,6 +82,7 @@ export class WalletAnalyzer {
             fundingSources,
             fundingDestinations,
             walletAge,
+            isInfrastructure: walletInfo.isInfrastructure,
         });
         const overallRiskScore = detector.calculateRiskScore(suspiciousIndicators);
         const riskLevel = detector.getRiskLevel(overallRiskScore);
@@ -314,10 +335,12 @@ export class WalletAnalyzer {
     generateSummary(transactions, sources, destinations) {
         const successfulTxs = transactions.filter(tx => tx.status === 'success').length;
         const failedTxs = transactions.filter(tx => tx.status === 'failed').length;
-        const totalSent = transactions
+        // Only sum ETH transfers (not token/nft transfers which have different value scales)
+        const ethTransfers = transactions.filter(tx => tx.category === 'transfer' || tx.category === 'contract_call');
+        const totalSent = ethTransfers
             .filter(tx => !tx.isIncoming)
             .reduce((sum, tx) => sum + tx.valueInEth, 0);
-        const totalReceived = transactions
+        const totalReceived = ethTransfers
             .filter(tx => tx.isIncoming)
             .reduce((sum, tx) => sum + tx.valueInEth, 0);
         const uniqueAddresses = new Set();

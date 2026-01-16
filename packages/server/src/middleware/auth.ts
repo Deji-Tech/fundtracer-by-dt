@@ -13,28 +13,32 @@ export interface AuthenticatedRequest extends Request {
     };
 }
 
+import jwt from 'jsonwebtoken';
+
 export async function authMiddleware(
     req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
 ) {
     const authHeader = req.headers.authorization;
+    const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'No authentication token provided' });
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
+    const token = authHeader.split('Bearer ')[1];
 
     try {
-        const auth = getAuth();
-        const decodedToken = await auth.verifyIdToken(idToken);
-
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
         req.user = {
-            uid: decodedToken.uid,
-            email: decodedToken.email || '',
-            name: decodedToken.name,
+            uid: decoded.address,
+            email: decoded.address, // Use address as email identifier
+            name: decoded.address.slice(0, 6) + '...' + decoded.address.slice(-4),
         };
+        // Pass tier info if needed in other middlewares via res.locals or extending req.user
+        res.locals.tier = decoded.tier;
+        res.locals.isVerified = decoded.isVerified;
 
         next();
     } catch (error) {

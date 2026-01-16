@@ -110,6 +110,15 @@ export class AlchemyProvider {
         }
         return response.data.result;
     }
+    /** Get contract code */
+    async getCode(address) {
+        try {
+            return await this.rpcRequest('eth_getCode', [address, 'latest']);
+        }
+        catch {
+            return '0x';
+        }
+    }
     /** Get wallet info (balance and tx count) */
     async getWalletInfo(address) {
         const cacheKey = `walletInfo:${address}`;
@@ -199,6 +208,8 @@ export class AlchemyProvider {
             ? new Date(transfer.metadata.blockTimestamp).getTime() / 1000
             : 0;
         const valueInEth = transfer.value || 0;
+        // Convert ETH value to Wei string for consistency
+        const value = (valueInEth * 1e18).toLocaleString('fullwide', { useGrouping: false }).split('.')[0];
         let category = 'unknown';
         if (transfer.category === 'external') {
             category = 'transfer';

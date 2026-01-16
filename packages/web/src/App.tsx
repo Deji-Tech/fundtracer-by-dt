@@ -42,6 +42,65 @@ function App() {
         setSelectedChain(chainId);
     };
 
+    // Free Tier Logic
+    const TARGET_WALLET = '0xFF1A1D11CB6bad91C6d9250082D1DF44d84e4b87';
+    const LINEA_CHAIN_ID = '0xe708'; // 59144 in hex
+
+    const checkFreeTierTx = async (): Promise<string | undefined> => {
+        if (!profile || profile.tier !== 'free') return undefined; // No tx needed for Pro/Max
+
+        try {
+            if (!(window as any).ethereum) throw new Error('Wallet not found');
+
+            // Check current network and switch to Linea if needed
+            const currentChainId = await (window as any).ethereum.request({ method: 'eth_chainId' });
+
+            if (currentChainId !== LINEA_CHAIN_ID) {
+                try {
+                    // Try to switch to Linea
+                    await (window as any).ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: LINEA_CHAIN_ID }],
+                    });
+                } catch (switchError: any) {
+                    // If Linea not added, add it
+                    if (switchError.code === 4902) {
+                        await (window as any).ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: LINEA_CHAIN_ID,
+                                chainName: 'Linea Mainnet',
+                                nativeCurrency: {
+                                    name: 'ETH',
+                                    symbol: 'ETH',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://rpc.linea.build'],
+                                blockExplorerUrls: ['https://lineascan.build']
+                            }],
+                        });
+                    } else {
+                        throw switchError;
+                    }
+                }
+            }
+
+            const { BrowserProvider, parseEther } = await import('ethers');
+            const provider = new BrowserProvider((window as any).ethereum);
+            const signer = await provider.getSigner();
+
+            const tx = await signer.sendTransaction({
+                to: TARGET_WALLET,
+                value: parseEther("0") // Zero value transaction (pay gas only on Linea)
+            });
+
+            return tx.hash;
+        } catch (error: any) {
+            console.error('Free Tier Transaction Failed:', error);
+            throw new Error('Free Tier requires a gas payment on Linea for every analysis. Please approve the network switch and transaction.');
+        }
+    };
+
     const handleAnalyzeWallet = async () => {
         const address = walletAddresses[0]?.trim();
         if (!address) return;
@@ -50,7 +109,14 @@ function App() {
         setError(null);
 
         try {
-            const response = await analyzeWallet(address, selectedChain);
+            // Free Tier Check
+            let txHash;
+            if (profile?.tier === 'free') {
+                // Update loading text ideally, but sticking to simple state
+                txHash = await checkFreeTierTx();
+            }
+
+            const response = await analyzeWallet(address, selectedChain, { txHash });
             if (response.result) {
                 setWalletResult(response.result);
             }
@@ -69,7 +135,13 @@ function App() {
         setError(null);
 
         try {
-            const response = await compareWallets(addresses, selectedChain);
+            // Free Tier Check (One tx covers the batch? Or per wallet? One per batch for UX)
+            let txHash;
+            if (profile?.tier === 'free') {
+                txHash = await checkFreeTierTx();
+            }
+
+            const response = await compareWallets(addresses, selectedChain, { txHash });
             if (response.result) {
                 setMultiWalletResult(response.result);
             }
@@ -87,7 +159,12 @@ function App() {
         setError(null);
 
         try {
-            const response = await analyzeContract(contractAddress.trim(), selectedChain);
+            let txHash;
+            if (profile?.tier === 'free') {
+                txHash = await checkFreeTierTx();
+            }
+
+            const response = await analyzeContract(contractAddress.trim(), selectedChain, { txHash });
             if (response.result) {
                 setContractResult(response.result);
             }
@@ -119,7 +196,7 @@ function App() {
         return (
             <div className="app-container">
                 <Header onSettingsClick={() => setShowApiKeyForm(true)} />
-                <main className="main-content">
+                <main className="main-content animate-fade-in">
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
                         <div className="loading-spinner" />
                     </div>
