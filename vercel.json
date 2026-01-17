@@ -2,7 +2,7 @@
     "version": 2,
     "buildCommand": "npm run build --workspace=@fundtracer/web",
     "outputDirectory": "packages/web/dist",
-    "installCommand": "npm install",
+    "installCommand": "npm install --include=dev",
     "framework": null,
     "rewrites": [
         {
