@@ -1,6 +1,6 @@
 {
     "version": 2,
-    "buildCommand": "npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/server && npm run build --workspace=@fundtracer/web",
+    "buildCommand": "npm install && npm run build --workspace=@fundtracer/web",
     "outputDirectory": "packages/web/dist",
     "installCommand": "npm install",
     "rewrites": [
