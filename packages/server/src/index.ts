@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 // Serve Static Frontend
 // In Pxxl App, npm start --workspace sets CWD to packages/server
 // Frontend build output is in sibling directory: ../web/dist
-const webDistPath = path.resolve(__dirname, '../../web/dist');
+const webDistPath = path.join(process.cwd(), '../web/dist');
 
 console.log('[DEBUG] CWD:', process.cwd());
 console.log('[DEBUG] Serving static files from:', webDistPath);
