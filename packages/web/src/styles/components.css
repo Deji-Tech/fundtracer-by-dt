@@ -776,6 +776,17 @@
     margin-bottom: var(--space-2);
 }
 
+.pricing-card.featured {
+    border-color: var(--color-text-secondary);
+    background: var(--color-bg-elevated);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.privacy-item .check-icon {
+    color: var(--color-text-primary);
+    flex-shrink: 0;
+}
+
 .use-details ol,
 .use-details ul {
     margin: 0;
@@ -913,23 +924,37 @@
    ============================================================ */
 
 .onboarding-modal {
-    max-width: 700px;
-    width: 95vw;
-    max-height: 85vh;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background: var(--color-bg-primary);
+    /* Ensure solid background */
 }
 
 .onboarding-content {
     flex: 1;
     padding: var(--space-6);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .onboarding-step {
     text-align: center;
+    max-width: 800px;
+    /* Limit width on large screens */
+    width: 100%;
 }
+
+/* ... existing styles ... */
 
 .onboarding-step h2 {
     font-size: var(--text-2xl);
@@ -1042,7 +1067,8 @@
 }
 
 .privacy-item .check-icon {
-    color: #4ade80;
+    color: var(--color-text-primary);
+    /* RESTORED NEUTRAL COLOR */
     flex-shrink: 0;
 }
 
@@ -1089,8 +1115,11 @@
 }
 
 .pricing-card.featured {
-    border-color: #555;
-    background: linear-gradient(135deg, #1a1a1f 0%, #0a0a0f 100%);
+    border-color: var(--color-text-secondary);
+    /* RESTORED NEUTRAL COLOR */
+    background: var(--color-bg-elevated);
+    /* RESTORED NEUTRAL COLOR */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .pricing-badge {
@@ -1207,10 +1236,9 @@
     color: var(--color-text-primary);
 }
 
-/* Upgrade Button (Header) */
 .upgrade-btn {
-    background: linear-gradient(135deg, #2a2a2f 0%, #1a1a1f 100%);
-    border: 1px solid #3a3a3f;
+    background: transparent;
+    border: 1px solid var(--color-surface-border);
     color: var(--color-text-secondary);
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-xs);
@@ -1223,9 +1251,9 @@
 }
 
 .upgrade-btn:hover {
-    background: #3a3a3f;
+    background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
-    border-color: #555;
+    border-color: var(--color-text-primary);
 }
 
 /* Additional Animations */

@@ -123,7 +123,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
                     <div className="pricing-badge">Popular</div>
                     <div className="pricing-header">
                         <h3>Pro</h3>
-                        <div className="pricing-price">$19<span>/mo</span></div>
+                        <div className="pricing-price">$10<span>/mo</span></div>
                     </div>
                     <ul className="pricing-features">
                         <li><Check size={16} /> Unlimited analyses</li>
@@ -135,7 +135,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
                 <div className="pricing-card">
                     <div className="pricing-header">
                         <h3>Max</h3>
-                        <div className="pricing-price">$49<span>/mo</span></div>
+                        <div className="pricing-price">$17<span>/mo</span></div>
                     </div>
                     <ul className="pricing-features">
                         <li><Check size={16} /> Everything in Pro</li>
