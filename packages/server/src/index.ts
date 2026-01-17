@@ -39,6 +39,34 @@ const webDistPath = path.join(process.cwd(), '../web/dist');
 console.log('[DEBUG] CWD:', process.cwd());
 console.log('[DEBUG] Serving static files from:', webDistPath);
 
+// Debug: List files to verify path
+import fs from 'fs';
+try {
+    console.log('[DEBUG] Listing web directory contents:');
+    const webDir = path.join(process.cwd(), '../web');
+    if (fs.existsSync(webDir)) {
+        console.log('web dir contents:', fs.readdirSync(webDir));
+        const distDir = path.join(webDir, 'dist');
+        if (fs.existsSync(distDir)) {
+            console.log('web/dist contents:', fs.readdirSync(distDir));
+
+            // Check index.html specifically
+            const indexPath = path.join(distDir, 'index.html');
+            if (fs.existsSync(indexPath)) {
+                console.log('index.html size:', fs.statSync(indexPath).size);
+            } else {
+                console.error('CRITICAL: index.html missing in dist!');
+            }
+        } else {
+            console.error('CRITICAL: web/dist directory missing!');
+        }
+    } else {
+        console.error('CRITICAL: web directory missing!');
+    }
+} catch (e) {
+    console.error('[DEBUG] Error listing files:', e);
+}
+
 app.use(express.static(webDistPath));
 
 
