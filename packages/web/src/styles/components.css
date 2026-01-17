@@ -1318,3 +1318,188 @@
 .btn-primary:hover::after {
     left: 100%;
 }
+/* ============================================================
+   Payment Modal
+   ============================================================ */
+
+.payment-modal {
+    max-width: 600px;
+    width: 90vw;
+}
+
+.payment-modal-header {
+    text-align: center;
+    margin-bottom: var(--space-6);
+}
+
+.payment-modal-header h2 {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.payment-subtitle {
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+}
+
+/* Payment Tiers */
+.payment-tiers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+@media (max-width: 600px) {
+    .payment-tiers {
+        grid-template-columns: 1fr;
+    }
+}
+
+.payment-tier {
+    background: var(--color-surface);
+    border: 1px solid var(--color-surface-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.payment-tier:hover {
+    border-color: var(--color-text-secondary);
+    transform: translateY(-2px);
+}
+
+.payment-tier-featured {
+    border-color: var(--color-text-primary);
+    background: var(--color-bg-elevated);
+}
+
+.tier-badge {
+    position: absolute;
+    top: -10px;
+    right: var(--space-3);
+    background: var(--color-text-primary);
+    color: var(--color-bg-primary);
+    font-size: var(--text-xs);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.tier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-surface-border);
+}
+
+.tier-label {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tier-price {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+}
+
+.tier-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.tier-features span {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Payment Address Section */
+.payment-address-section {
+    background: var(--color-bg-tertiary);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-surface-border);
+    margin-bottom: var(--space-4);
+}
+
+.payment-label {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-2);
+}
+
+.payment-address-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-bg-primary);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-surface-border);
+    margin-bottom: var(--space-3);
+}
+
+.payment-address {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+.copy-btn {
+    flex-shrink: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-surface-border);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-btn:hover {
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    border-color: var(--color-text-primary);
+}
+
+.payment-instructions {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.payment-warning {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.payment-warning strong {
+    color: #fbbf24;
+}

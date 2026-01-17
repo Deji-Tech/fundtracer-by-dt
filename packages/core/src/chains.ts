@@ -12,7 +12,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://etherscan.io',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: true,
+        enabled: false, // Coming soon
     },
     linea: {
         id: 'linea',
@@ -30,7 +30,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://arbiscan.io',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: true,
+        enabled: false, // Coming soon
     },
     base: {
         id: 'base',
@@ -39,7 +39,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://basescan.org',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: true,
+        enabled: false, // Coming soon
     },
     optimism: {
         id: 'optimism',

@@ -102,49 +102,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) =>
             <p className="privacy-note">
                 Read our full <button className="link-btn" onClick={() => { }}>Privacy Policy</button> for details.
             </p>
-        </div>,
-
-        // Step 4: Pricing
-        <div key="pricing" className="onboarding-step animate-fade-in">
-            <h2>Choose Your Plan</h2>
-            <div className="pricing-grid">
-                <div className="pricing-card">
-                    <div className="pricing-header">
-                        <h3>Free</h3>
-                        <div className="pricing-price">$0</div>
-                    </div>
-                    <ul className="pricing-features">
-                        <li><Check size={16} /> Basic wallet analysis</li>
-                        <li><Check size={16} /> Pay-per-analysis (gas only)</li>
-                        <li><Check size={16} /> Community support</li>
-                    </ul>
-                </div>
-                <div className="pricing-card featured">
-                    <div className="pricing-badge">Popular</div>
-                    <div className="pricing-header">
-                        <h3>Pro</h3>
-                        <div className="pricing-price">$10<span>/mo</span></div>
-                    </div>
-                    <ul className="pricing-features">
-                        <li><Check size={16} /> Unlimited analyses</li>
-                        <li><Check size={16} /> Contract analysis</li>
-                        <li><Check size={16} /> Priority support</li>
-                        <li><Check size={16} /> Export reports</li>
-                    </ul>
-                </div>
-                <div className="pricing-card">
-                    <div className="pricing-header">
-                        <h3>Max</h3>
-                        <div className="pricing-price">$17<span>/mo</span></div>
-                    </div>
-                    <ul className="pricing-features">
-                        <li><Check size={16} /> Everything in Pro</li>
-                        <li><Check size={16} /> Sybil detection</li>
-                        <li><Check size={16} /> API access</li>
-                        <li><Check size={16} /> Custom integrations</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     ];
 
