@@ -13,16 +13,13 @@
             "destination": "/index.html"
         }
     ],
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/api"
-        }
-    ],
     "functions": {
-        "api/index.ts": {
-            "memory": 3008,
-            "maxDuration": 30
+        "api/*.ts": {
+            "memory": 1024,
+            "maxDuration": 10
         }
+    },
+    "env": {
+        "NODE_ENV": "production"
     }
 }
