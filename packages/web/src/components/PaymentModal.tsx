@@ -31,7 +31,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="payment-tiers">
-                    <div className="payment-tier">
+                    <div className="payment-tier animate-card-1">
                         <div className="tier-header">
                             <span className="tier-label">PRO TIER</span>
                             <span className="tier-price">10 USDT</span>
@@ -43,7 +43,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    <div className="payment-tier payment-tier-featured">
+                    <div className="payment-tier payment-tier-featured animate-card-2">
                         <div className="tier-badge">BEST VALUE</div>
                         <div className="tier-header">
                             <span className="tier-label">MAX TIER</span>

@@ -229,6 +229,7 @@ function App() {
                 }}
                 onUpgradeClick={() => setShowPayment(true)}
                 onFeedbackClick={() => setShowFeedback(true)}
+                isUpgradeActive={showPayment}
             />
 
             <main className="main-content">

@@ -17,6 +17,61 @@
     animation: fadeIn 0.2s ease forwards;
 }
 
+/* Modal slide in */
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px) scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Pulse glow for active buttons */
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 12px 4px rgba(255, 255, 255, 0.15);
+    }
+}
+
+.animate-pulse-glow {
+    animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+/* Stagger animation for cards */
+@keyframes cardSlideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-card-1 {
+    animation: cardSlideIn 0.4s ease forwards;
+    animation-delay: 0.1s;
+    opacity: 0;
+}
+
+.animate-card-2 {
+    animation: cardSlideIn 0.4s ease forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+}
+
 /* Spin for loaders */
 @keyframes spin {
     to {

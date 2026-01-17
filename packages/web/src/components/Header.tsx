@@ -6,9 +6,10 @@ interface HeaderProps {
     onSettingsClick?: () => void;
     onUpgradeClick?: () => void;
     onFeedbackClick?: () => void;
+    isUpgradeActive?: boolean;
 }
 
-function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick }: HeaderProps) {
+function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick, isUpgradeActive }: HeaderProps) {
     return (
         <header className="header">
             <div className="header-inner">
@@ -26,7 +27,7 @@ function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick }: HeaderProp
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                     {onUpgradeClick && (
                         <button
-                            className="upgrade-btn"
+                            className={`upgrade-btn ${isUpgradeActive ? 'upgrade-btn-active animate-pulse-glow' : ''}`}
                             onClick={onUpgradeClick}
                             title="Upgrade to Premium"
                         >
