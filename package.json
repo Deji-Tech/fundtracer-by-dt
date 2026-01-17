@@ -11,7 +11,8 @@
     "dev:server": "npm run dev --workspace=@fundtracer/server",
     "build": "npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/server && npm run build --workspace=@fundtracer/web",
     "cli": "npm run start --workspace=@fundtracer/cli",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "postinstall": "npm run build"
   },
   "keywords": [
     "blockchain",
