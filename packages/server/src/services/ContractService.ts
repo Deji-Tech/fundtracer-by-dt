@@ -5,13 +5,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_FILE = path.join(__dirname, '../data/known_contracts.json');
+// Use process.cwd() for consistent path resolution in both dev and production
+// In production (Pxxl), CWD is typically /app
+const DATA_FILE = process.env.NODE_ENV === 'production'
+    ? path.join(process.cwd(), 'src/data/known_contracts.json')
+    : path.join(process.cwd(), 'packages/server/src/data/known_contracts.json');
 
 export interface ContractInfo {
     name: string;
