@@ -39,3 +39,4 @@ packages/*/node_modules
 packages/*/build
 .env.vercel
 .env.railway
+ngrok.log
