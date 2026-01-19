@@ -3,6 +3,7 @@
  * Logs user activity and platform usage to Firestore
  */
 import { getFirestore } from '../firebase.js';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const db = getFirestore();
 
@@ -25,9 +26,9 @@ export async function trackAnalysis(event: AnalyticsEvent) {
         // Update daily stats
         await dailyStatsRef.set({
             date: today,
-            analysisCount: db.FieldValue.increment(1),
-            [`chainUsage.${event.chain}`]: db.FieldValue.increment(1),
-            [`featureUsage.${event.feature}`]: db.FieldValue.increment(1),
+            analysisCount: FieldValue.increment(1),
+            [`chainUsage.${event.chain}`]: FieldValue.increment(1),
+            [`featureUsage.${event.feature}`]: FieldValue.increment(1),
             lastUpdated: Date.now(),
         }, { merge: true });
 
@@ -35,7 +36,7 @@ export async function trackAnalysis(event: AnalyticsEvent) {
         if (event.userId) {
             const userRef = db.collection('users').doc(event.userId);
             await userRef.update({
-                analysisCount: db.FieldValue.increment(1),
+                analysisCount: FieldValue.increment(1),
                 lastActive: Date.now(),
             });
         }
@@ -76,7 +77,7 @@ export async function trackVisitor(userId?: string) {
 
         await dailyStatsRef.set({
             date: today,
-            visitors: db.FieldValue.increment(1),
+            visitors: FieldValue.increment(1),
             lastUpdated: Date.now(),
         }, { merge: true });
 
