@@ -19,7 +19,25 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
         const db = getFirestore();
         const userRef = db.collection('users').doc(req.user.uid);
         const userDoc = await userRef.get();
-        const userData = userDoc.data();
+        let userData = userDoc.data();
+
+        // Create user document if first time
+        if (!userDoc.exists) {
+            userData = {
+                email: req.user.email,
+                displayName: req.user.name,
+                tier: 'free',
+                pohVerified: false,
+                blacklisted: false,
+                analysisCount: 0,
+                createdAt: Date.now(),
+                lastActive: Date.now(),
+            };
+            await userRef.set(userData);
+        } else {
+            // Update last active
+            await userRef.update({ lastActive: Date.now() });
+        }
 
         const today = new Date().toISOString().split('T')[0];
         const usageToday = userData?.dailyUsage?.[today] || 0;
@@ -43,6 +61,10 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
             },
             createdAt: userData?.createdAt,
         });
+
+        //Track login (async, don't await)
+        const { trackVisitor } = await import('../utils/analytics.js');
+        trackVisitor(req.user.uid).catch(err => console.error('Failed to track login:', err));
     } catch (error) {
         console.error('Profile fetch error:', error);
         res.status(500).json({ error: 'Failed to fetch profile' });

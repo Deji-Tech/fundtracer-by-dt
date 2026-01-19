@@ -14,6 +14,7 @@ import {
 } from '@fundtracer/core';
 import { DuneService } from '../services/DuneService.js';
 import contractService from '../services/ContractService.js';
+import { trackAnalysis } from '../utils/analytics.js';
 
 const router = Router();
 
@@ -280,6 +281,15 @@ router.post('/wallet', async (req: AuthenticatedRequest, res: Response) => {
             },
             usageRemaining: res.locals.usageRemaining,
         });
+
+        // Track analytics (async, don't await to avoid slowing response)
+        trackAnalysis({
+            userId: req.user?.uid,
+            userEmail: req.user?.email,
+            chain,
+            feature: 'wallet',
+            timestamp: Date.now(),
+        }).catch(err => console.error('Failed to track analytics:', err));
     } catch (error: any) {
         console.error('Wallet analysis error:', error.message);
         res.status(500).json({
@@ -324,6 +334,15 @@ router.post('/compare', async (req: AuthenticatedRequest, res: Response) => {
             result,
             usageRemaining: res.locals.usageRemaining,
         });
+
+        // Track analytics
+        trackAnalysis({
+            userId: req.user?.uid,
+            userEmail: req.user?.email,
+            chain,
+            feature: 'compare',
+            timestamp: Date.now(),
+        }).catch(err => console.error('Failed to track analytics:', err));
     } catch (error: any) {
         console.error('Comparison error:', error);
         res.status(500).json({
@@ -402,6 +421,15 @@ router.post('/contract', async (req: AuthenticatedRequest, res: Response) => {
             result: enrichAnalysisResult(result),
             usageRemaining: res.locals.usageRemaining,
         });
+
+        // Track analytics
+        trackAnalysis({
+            userId: req.user?.uid,
+            userEmail: req.user?.email,
+            chain,
+            feature: 'contract',
+            timestamp: Date.now(),
+        }).catch(err => console.error('Failed to track analytics:', err));
     } catch (error: any) {
         console.error('Contract analysis error:', error.message);
         res.status(500).json({
@@ -464,6 +492,15 @@ router.post('/sybil', async (req: AuthenticatedRequest, res: Response) => {
             result,
             usageRemaining: res.locals.usageRemaining,
         });
+
+        // Track analytics
+        trackAnalysis({
+            userId: req.user?.uid,
+            userEmail: req.user?.email,
+            chain,
+            feature: 'sybil',
+            timestamp: Date.now(),
+        }).catch(err => console.error('Failed to track analytics:', err));
     } catch (error: any) {
         console.error('Sybil analysis error:', error.message);
         res.status(500).json({

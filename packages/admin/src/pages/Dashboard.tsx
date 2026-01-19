@@ -68,9 +68,15 @@ export default function Dashboard() {
 
     const loadDashboardData = async () => {
         try {
+            console.log('[Dashboard] Starting data load...');
+            console.log('[Dashboard] Firestore db:', db);
+
             // Load user stats
+            console.log('[Dashboard] Fetching users...');
             const usersSnap = await getDocs(collection(db, 'users'));
+            console.log('[Dashboard] Users found:', usersSnap.docs.length);
             const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log('[Dashboard] Users data:', users);
 
             const pohVerified = users.filter((u: any) => u.pohVerified === true).length;
             const freeUsers = users.filter((u: any) => u.tier === 'free' || !u.tier).length;
@@ -79,12 +85,18 @@ export default function Dashboard() {
             const blacklistedUsers = users.filter((u: any) => u.blacklisted === true).length;
 
             // Load revenue
+            console.log('[Dashboard] Fetching revenue...');
             const revenueSnap = await getDocs(collection(db, 'analytics', 'revenue', 'payments'));
+            console.log('[Dashboard] Payments found:', revenueSnap.docs.length);
             const totalRevenue = revenueSnap.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
+            console.log('[Dashboard] Total revenue:', totalRevenue);
 
             // Load analytics
+            console.log('[Dashboard] Fetching analytics...');
             const analyticsSnap = await getDocs(collection(db, 'analytics', 'daily_stats', 'records'));
+            console.log('[Dashboard] Analytics records found:', analyticsSnap.docs.length);
             const analyticsData = analyticsSnap.docs.map(doc => doc.data());
+            console.log('[Dashboard] Analytics data:', analyticsData);
 
             const totalAnalyses = analyticsData.reduce((sum: number, day: any) => sum + (day.analysisCount || 0), 0);
 
@@ -106,6 +118,15 @@ export default function Dashboard() {
                 return acc;
             }, { wallet: 0, compare: 0, sybil: 0, contract: 0 });
 
+            console.log('[Dashboard] Final stats:', {
+                users: users.length,
+                pohVerified,
+                totalRevenue,
+                totalAnalyses,
+                chainStats,
+                featureStats,
+            });
+
             setStats({
                 totalVisitors: users.length, // Simplified for now
                 activeUsers: users.length,
@@ -121,7 +142,7 @@ export default function Dashboard() {
             setChainUsage(chainStats);
             setFeatureUsage(featureStats);
         } catch (error) {
-            console.error('Error loading dashboard data:', error);
+            console.error('[Dashboard] Error loading dashboard data:', error);
         } finally {
             setLoading(false);
         }
