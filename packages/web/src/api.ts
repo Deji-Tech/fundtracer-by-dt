@@ -46,7 +46,7 @@ async function apiRequest<T>(
 ): Promise<T> {
     const token = getAuthToken();
 
-    if (!token && endpoint !== '/api/auth/login') { // Allow login without token
+    if (!token && endpoint !== '/api/auth/login' && endpoint !== '/api/analytics/visit') { // Allow login & tracking without token
         throw new Error('Not authenticated');
     }
 
@@ -107,6 +107,15 @@ export async function saveAlchemyKey(apiKey: string): Promise<{ success: boolean
 
 export async function removeAlchemyKey(): Promise<{ success: boolean; message: string }> {
     return apiRequest('/api/user/alchemy-api-key', 'DELETE');
+}
+
+// Analytics tracking
+export async function trackVisit(userId?: string): Promise<void> {
+    try {
+        await apiRequest('/api/analytics/visit', 'POST', { userId });
+    } catch (err) {
+        console.error('Failed to track visit:', err);
+    }
 }
 
 // Analysis endpoints

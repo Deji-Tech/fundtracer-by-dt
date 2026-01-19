@@ -106,6 +106,8 @@ apiRouter.use('/auth', authRoutes); // Public auth route
 apiRouter.use('/contracts', contractRoutes); // Public contract lookup
 apiRouter.use('/analyze', authMiddleware, usageMiddleware, analyzeRoutes);
 apiRouter.use('/dune', authMiddleware, duneRoutes);
+import { trackingRoutes } from './routes/tracking.js';
+apiRouter.use('/analytics', trackingRoutes); // Public analytics route
 
 // Mount router at both /api (for local dev) and root (for Netlify environment where /api might be stripped)
 app.use('/api', apiRouter);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChainId, AnalysisResult, MultiWalletResult, getEnabledChains, CHAINS } from '@fundtracer/core';
 import { useAuth } from './contexts/AuthContext';
-import { analyzeWallet, compareWallets, analyzeContract, loadMoreTransactions } from './api';
+import { analyzeWallet, compareWallets, analyzeContract, loadMoreTransactions, trackVisit } from './api';
 import Header from './components/Header';
 import AuthPanel from './components/AuthPanel';
 import HowToUse from './components/HowToUse';
@@ -51,6 +51,11 @@ function App() {
     const [contractResult, setContractResult] = useState<ContractAnalysisResult | null>(null);
     const [pagination, setPagination] = useState<{ total: number; offset: number; limit: number; hasMore: boolean } | null>(null);
     const [currentAnalysisAddress, setCurrentAnalysisAddress] = useState<string>('');
+
+    // Track visit on mount
+    React.useEffect(() => {
+        trackVisit();
+    }, []);
 
     // Show onboarding for first-time users after login
     React.useEffect(() => {

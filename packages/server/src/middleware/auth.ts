@@ -3,7 +3,7 @@
 // ============================================================
 
 import { Request, Response, NextFunction } from 'express';
-import { getAuth } from '../firebase.js';
+import { getAuth, getFirestore } from '../firebase.js';
 
 export interface AuthenticatedRequest extends Request {
     user?: {
@@ -39,6 +39,23 @@ export async function authMiddleware(
         // Pass tier info if needed in other middlewares via res.locals or extending req.user
         res.locals.tier = decoded.tier;
         res.locals.isVerified = decoded.isVerified;
+
+        // Check if user is blacklisted
+        try {
+            const db = getFirestore();
+            const userDoc = await db.collection('users').doc(req.user.uid).get();
+            if (userDoc.exists && userDoc.data()?.blacklisted === true) {
+                console.warn(`[AUTH] Blocked blacklisted user: ${req.user.uid}`);
+                return res.status(403).json({
+                    error: 'Account suspended',
+                    message: 'Your account has been blacklisted. Please contact support.'
+                });
+            }
+        } catch (dbError) {
+            console.error('Blacklist check failed:', dbError);
+            // Fail open or closed? Closed is safer, but fail open avoids blocking everyone if DB is down.
+            // Let's fail open for now but log it.
+        }
 
         next();
     } catch (error) {
