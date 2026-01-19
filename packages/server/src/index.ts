@@ -138,7 +138,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Only listen if run directly (development or standalone server)
-if (process.env.NODE_ENV !== 'production' || process.env.IS_STANDALONE === 'true') {
+// Always listen on port (required for container deployments like Pxxl)
+if (true) {
     app.listen(PORT, () => {
         console.log(`FundTracer API Server running on port ${PORT}`);
         console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
