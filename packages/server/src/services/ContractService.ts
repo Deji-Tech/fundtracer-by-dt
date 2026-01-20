@@ -123,9 +123,10 @@ class ContractService {
             this.contracts = new Map(Object.entries(data));
             console.log(`[ContractService] Loaded ${this.contracts.size} contracts from ${DATA_FILE}`);
             this.initialized = true;
-        } catch (error) {
-            console.error('[ContractService] Failed to load contracts:', error);
-            // Initialize with empty map so service still works
+        } catch (error: any) {
+            // If filesystem operations fail (common in read-only containers), just start with empty map
+            console.warn('[ContractService] Failed to load/create contracts file (filesystem may be read-only):', error.message);
+            console.warn('[ContractService] Starting with empty contract cache. Service will still function.');
             this.contracts = new Map();
             this.initialized = true;
         }
@@ -181,8 +182,13 @@ class ContractService {
             this.contracts.forEach((v, k) => obj[k] = v);
             fs.writeFileSync(DATA_FILE, JSON.stringify(obj, null, 2));
             console.log(`[ContractService] Saved ${this.contracts.size} contracts to disk`);
-        } catch (error) {
-            console.error('[ContractService] Failed to save contracts:', error);
+        } catch (error: any) {
+            // Don't crash if filesystem is read-only in production
+            if (error.code === 'EACCES' || error.code === 'EROFS' || error.code === 'ENOENT') {
+                console.warn('[ContractService] Cannot save contracts - filesystem is read-only or no write permissions');
+            } else {
+                console.error('[ContractService] Failed to save contracts:', error);
+            }
         }
     }
 
