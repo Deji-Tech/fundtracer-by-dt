@@ -5,7 +5,8 @@
 import { getFirestore } from '../firebase.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
-const db = getFirestore();
+// Lazy getter for Firestore to avoid initialization order issues
+const getDb = () => getFirestore();
 
 export interface AnalyticsEvent {
     userId?: string;
@@ -21,7 +22,7 @@ export interface AnalyticsEvent {
 export async function trackAnalysis(event: AnalyticsEvent) {
     try {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-        const dailyStatsRef = db.collection('analytics').doc('daily_stats').collection('records').doc(today);
+        const dailyStatsRef = getDb().collection('analytics').doc('daily_stats').collection('records').doc(today);
 
         // Update daily stats
         await dailyStatsRef.set({
@@ -34,7 +35,7 @@ export async function trackAnalysis(event: AnalyticsEvent) {
 
         // Update user stats
         if (event.userId) {
-            const userRef = db.collection('users').doc(event.userId);
+            const userRef = getDb().collection('users').doc(event.userId);
             await userRef.update({
                 analysisCount: FieldValue.increment(1),
                 lastActive: Date.now(),
@@ -58,7 +59,7 @@ export async function trackPayment(data: {
     chain: string;
 }) {
     try {
-        await db.collection('analytics').doc('revenue').collection('payments').add({
+        await getDb().collection('analytics').doc('revenue').collection('payments').add({
             ...data,
             timestamp: Date.now(),
         });
@@ -73,7 +74,7 @@ export async function trackPayment(data: {
 export async function trackVisitor(userId?: string) {
     try {
         const today = new Date().toISOString().split('T')[0];
-        const dailyStatsRef = db.collection('analytics').doc('daily_stats').collection('records').doc(today);
+        const dailyStatsRef = getDb().collection('analytics').doc('daily_stats').collection('records').doc(today);
 
         await dailyStatsRef.set({
             date: today,
@@ -82,7 +83,7 @@ export async function trackVisitor(userId?: string) {
         }, { merge: true });
 
         if (userId) {
-            const userActivityRef = db.collection('analytics').doc('user_activity').collection('logins');
+            const userActivityRef = getDb().collection('analytics').doc('user_activity').collection('logins');
             await userActivityRef.add({
                 userId,
                 event: 'login',
