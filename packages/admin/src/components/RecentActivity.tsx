@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { Activity, DollarSign, User, AlertTriangle } from 'lucide-react';
@@ -6,7 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface ActivityItem {
     id: string;
-    type: 'payment' | 'analysis' | 'tier_change' | 'blacklist' | 'poh_verify';
+    type: 'payment' | 'analysis' | 'tier_change' | 'blacklist' | 'unblacklist' | 'poh_verify' | 'poh_unverify';
     userId: string;
     userEmail?: string;
     details: any;

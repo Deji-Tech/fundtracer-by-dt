@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { Search, Edit2, Ban, CheckCircle, XCircle, Shield } from 'lucide-react';
+import { Search, Edit2, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 interface User {
     id: string;

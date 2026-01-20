@@ -1,4 +1,3 @@
-import React from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import { ChainUsage, FeatureUsage, DashboardStats } from '../pages/Dashboard';
 
@@ -13,13 +12,6 @@ const CHAIN_COLORS = {
     arbitrum: '#28A0F0',
     base: '#0052FF',
     linea: '#61DFFF',
-};
-
-const FEATURE_COLORS = {
-    wallet: '#8b5cf6',
-    compare: '#06b6d4',
-    sybil: '#f59e0b',
-    contract: '#ec4899',
 };
 
 export default function UsageCharts({ chainUsage, featureUsage, stats }: Props) {
