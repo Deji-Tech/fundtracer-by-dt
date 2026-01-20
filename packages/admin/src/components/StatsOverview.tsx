@@ -1,4 +1,3 @@
-import React from 'react';
 import { DashboardStats } from '../pages/Dashboard';
 import { Users, Eye, Shield, DollarSign, Activity, UserCheck, Ban } from 'lucide-react';
 

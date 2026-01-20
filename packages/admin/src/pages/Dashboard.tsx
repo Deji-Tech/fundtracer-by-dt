@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, query, getDocs, orderBy, limit, where, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import StatsOverview from '../components/StatsOverview';
 import UsageCharts from '../components/UsageCharts';
 import UserManagement from '../components/UserManagement';
 import RecentActivity from '../components/RecentActivity';
-import { LogOut, Users, Activity, DollarSign, TrendingUp } from 'lucide-react';
+import { LogOut, Users, Activity, TrendingUp } from 'lucide-react';
 
 export interface DashboardStats {
     totalVisitors: number;
