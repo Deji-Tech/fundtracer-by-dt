@@ -3,12 +3,30 @@
  * Handles server-side authentication verification and Firestore access.
  */
 import admin from 'firebase-admin';
+import fs from 'fs';
 
 let firebaseInitialized = false;
 
 export function initializeFirebase() {
     if (firebaseInitialized) return;
 
+    // Method 1: Use GOOGLE_APPLICATION_CREDENTIALS file (preferred for Render)
+    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (credentialsPath && fs.existsSync(credentialsPath)) {
+        try {
+            const serviceAccount = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+            });
+            firebaseInitialized = true;
+            console.log('Firebase Admin SDK initialized from credentials file');
+            return;
+        } catch (error) {
+            console.error('Failed to load Firebase credentials file:', error);
+        }
+    }
+
+    // Method 2: Use individual environment variables (fallback)
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     let privateKey = process.env.FIREBASE_PRIVATE_KEY;
