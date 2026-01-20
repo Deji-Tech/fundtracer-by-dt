@@ -10,8 +10,29 @@ let firebaseInitialized = false;
 export function initializeFirebase() {
     if (firebaseInitialized) return;
 
-    // Method 1: Use GOOGLE_APPLICATION_CREDENTIALS file (preferred for Render)
+    console.log('[Firebase] Starting initialization...');
+
+    // Method 1: Use base64-encoded service account JSON (most reliable)
+    const base64ServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    if (base64ServiceAccount) {
+        try {
+            console.log('[Firebase] Found base64 service account, decoding...');
+            const decoded = Buffer.from(base64ServiceAccount, 'base64').toString('utf-8');
+            const serviceAccount = JSON.parse(decoded);
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+            });
+            firebaseInitialized = true;
+            console.log('[Firebase] ✅ Initialized from base64 service account');
+            return;
+        } catch (error) {
+            console.error('[Firebase] Failed to decode base64 service account:', error);
+        }
+    }
+
+    // Method 2: Use GOOGLE_APPLICATION_CREDENTIALS file
     const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    console.log('[Firebase] Checking credentials file path:', credentialsPath || '(not set)');
     if (credentialsPath && fs.existsSync(credentialsPath)) {
         try {
             const serviceAccount = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
@@ -19,10 +40,10 @@ export function initializeFirebase() {
                 credential: admin.credential.cert(serviceAccount),
             });
             firebaseInitialized = true;
-            console.log('Firebase Admin SDK initialized from credentials file');
+            console.log('[Firebase] ✅ Initialized from credentials file');
             return;
         } catch (error) {
-            console.error('Failed to load Firebase credentials file:', error);
+            console.error('[Firebase] Failed to load credentials file:', error);
         }
     }
 
