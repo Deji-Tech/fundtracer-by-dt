@@ -106,14 +106,28 @@ class ContractService {
      */
     private loadContracts(): void {
         try {
-            if (fs.existsSync(DATA_FILE)) {
-                const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-                this.contracts = new Map(Object.entries(data));
-                console.log(`[ContractService] Loaded ${this.contracts.size} contracts`);
-                this.initialized = true;
+            // Ensure directory exists
+            const dir = path.dirname(DATA_FILE);
+            if (!fs.existsSync(dir)) {
+                console.log(`[ContractService] Creating data directory: ${dir}`);
+                fs.mkdirSync(dir, { recursive: true });
             }
+
+            // Create empty file if it doesn't exist
+            if (!fs.existsSync(DATA_FILE)) {
+                console.log(`[ContractService] Creating empty contracts file: ${DATA_FILE}`);
+                fs.writeFileSync(DATA_FILE, '{}');
+            }
+
+            const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+            this.contracts = new Map(Object.entries(data));
+            console.log(`[ContractService] Loaded ${this.contracts.size} contracts from ${DATA_FILE}`);
+            this.initialized = true;
         } catch (error) {
             console.error('[ContractService] Failed to load contracts:', error);
+            // Initialize with empty map so service still works
+            this.contracts = new Map();
+            this.initialized = true;
         }
     }
 
