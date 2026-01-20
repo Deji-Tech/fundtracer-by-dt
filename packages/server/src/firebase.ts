@@ -73,8 +73,9 @@ export function initializeFirebase() {
     console.log('[Firebase] Private key starts with BEGIN:', privateKey?.includes('-----BEGIN PRIVATE KEY-----'));
 
     if (!projectId || !clientEmail || !privateKey) {
-        console.warn('[Firebase] Firebase credentials not configured. Auth will be disabled.');
-        return;
+        const errorMsg = '[Firebase] FATAL: Credentials not configured! Set FIREBASE_SERVICE_ACCOUNT_BASE64 (preferred) or FIREBASE_PROJECT_ID/CLIENT_EMAIL/PRIVATE_KEY.';
+        console.error(errorMsg);
+        throw new Error(errorMsg);
     }
 
     try {
