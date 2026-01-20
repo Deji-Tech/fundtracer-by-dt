@@ -9,6 +9,25 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+
+// Load environment variables FIRST
+dotenv.config();
+
+// Global error handlers to catch any startup crashes
+process.on('uncaughtException', (error) => {
+    console.error('FATAL: Uncaught Exception during startup!');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('FATAL: Unhandled Rejection during startup!');
+    console.error('Reason:', reason);
+    console.error('Promise:', promise);
+    process.exit(1);
+});
+
 import { initializeFirebase } from './firebase.js';
 import { authMiddleware } from './middleware/auth.js';
 import { usageMiddleware } from './middleware/usage.js';
