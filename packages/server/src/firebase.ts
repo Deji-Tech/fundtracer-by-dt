@@ -31,20 +31,28 @@ export function initializeFirebase() {
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
+    console.log('[Firebase] Checking env vars...');
+    console.log('[Firebase] Project ID:', projectId ? '✓ set' : '✗ missing');
+    console.log('[Firebase] Client Email:', clientEmail ? '✓ set' : '✗ missing');
+    console.log('[Firebase] Private Key:', privateKey ? `✓ set (${privateKey.length} chars)` : '✗ missing');
+
     // Support base64-encoded private key for platforms like Vercel
     if (privateKey && !privateKey.includes('-----BEGIN')) {
         try {
+            console.log('[Firebase] Decoding base64 private key...');
             privateKey = Buffer.from(privateKey, 'base64').toString('utf-8');
         } catch (e) {
-            console.warn('Failed to decode base64 private key, using as-is');
+            console.warn('[Firebase] Failed to decode base64 private key, using as-is');
         }
     }
 
     // Replace escaped newlines
     privateKey = privateKey?.replace(/\\n/g, '\n');
 
+    console.log('[Firebase] Private key starts with BEGIN:', privateKey?.includes('-----BEGIN PRIVATE KEY-----'));
+
     if (!projectId || !clientEmail || !privateKey) {
-        console.warn('Firebase credentials not configured. Auth will be disabled.');
+        console.warn('[Firebase] Firebase credentials not configured. Auth will be disabled.');
         return;
     }
 
