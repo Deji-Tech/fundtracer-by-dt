@@ -15,6 +15,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Admin email whitelist
 const ADMIN_EMAILS = [
     'dejitech2@gmail.com',
+    'ige6956@gmail.com',
+    'ayomidevoltron@gmail.com',
+    'olzakariyhau@gmail.com',
+    'haiconempire@gmail.com',
     // Add more admin emails here
 ];
 
