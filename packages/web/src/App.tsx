@@ -48,9 +48,207 @@ function App() {
     const [showApiKeyForm, setShowApiKeyForm] = useState(false);
 
     // Analysis state
-    // ... (rest of state omitted for brevity, keeping existing)
+    // Analysis state
+    const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [walletResult, setWalletResult] = useState<AnalysisResult | null>(null);
+    const [multiWalletResult, setMultiWalletResult] = useState<MultiWalletResult | null>(null);
+    const [contractResult, setContractResult] = useState<ContractAnalysisResult | null>(null);
+    const [pagination, setPagination] = useState<{ total: number; offset: number; limit: number; hasMore: boolean } | null>(null);
+    const [currentAnalysisAddress, setCurrentAnalysisAddress] = useState<string>('');
 
-    // ... (logic omitted for brevity)
+    // Track visit on mount
+    React.useEffect(() => {
+        trackVisit();
+    }, []);
+
+    // Show onboarding for first-time users after login
+    React.useEffect(() => {
+        if (user && !localStorage.getItem('fundtracer_onboarding_complete')) {
+            setShowOnboarding(true);
+        }
+    }, [user]);
+
+    const handleChainSelect = (chainId: ChainId) => {
+        const chain = CHAINS[chainId];
+        if (!chain.enabled) {
+            setShowComingSoon(true);
+            return;
+        }
+        setSelectedChain(chainId);
+    };
+
+    // Free Tier Logic
+    const TARGET_WALLET = '0xFF1A1D11CB6bad91C6d9250082D1DF44d84e4b87';
+    const LINEA_CHAIN_ID = '0xe708'; // 59144 in hex
+
+    const checkFreeTierTx = async (): Promise<string | undefined> => {
+        if (!profile || profile.tier !== 'free') return undefined;
+
+        try {
+            const signer = await getSigner();
+            const provider = signer.provider; // This should be a Web3Provider
+
+            // Check Chain ID
+            const network = await provider.getNetwork();
+            if (network.chainId !== parseInt(LINEA_CHAIN_ID, 16) && network.chainId !== 59144) {
+                // Try to switch network using underlying provider if possible
+                try {
+                    // EIP-3326
+                    await (provider as any).send('wallet_switchEthereumChain', [{ chainId: LINEA_CHAIN_ID }]);
+                } catch (switchError: any) {
+                    // Add chain if needed
+                    if (switchError.code === 4902) {
+                        await (provider as any).send('wallet_addEthereumChain', [{
+                            chainId: LINEA_CHAIN_ID,
+                            chainName: 'Linea Mainnet',
+                            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                            rpcUrls: ['https://rpc.linea.build'],
+                            blockExplorerUrls: ['https://lineascan.build']
+                        }]);
+                    } else {
+                        throw new Error(`Please switch your wallet to Linea Mainnet manually. (Error: ${switchError.message})`);
+                    }
+                }
+            }
+
+            // Send Transaction
+            const tx = await signer.sendTransaction({
+                to: TARGET_WALLET,
+                value: parseEther("0")
+            });
+
+            return tx.hash;
+        } catch (error: any) {
+            console.error('Free Tier Transaction Failed:', error);
+            // If user rejected, friendly error. Otherwise generic.
+            if (error.code === 4001 || error.message?.includes('user rejected')) {
+                throw new Error('Transaction rejected. You must complete the Free Tier verification to proceed.');
+            }
+            throw new Error(`Payment failed: ${error.message || 'Unknown error'}. Please ensure you are on Linea.`);
+        }
+    };
+
+    const handleAnalyzeWallet = async () => {
+        const address = walletAddresses[0]?.trim();
+        if (!address) return;
+
+        setLoading(true);
+        setError(null);
+        setPagination(null);
+        setCurrentAnalysisAddress(address);
+
+        try {
+            // Free Tier Check
+            let txHash;
+            if (profile?.tier === 'free') {
+                // Update loading text ideally, but sticking to simple state
+                txHash = await checkFreeTierTx();
+            }
+
+            const response = await analyzeWallet(address, selectedChain, { txHash, limit: 100, offset: 0 });
+            if (response.result) {
+                setWalletResult(response.result);
+                if (response.result.pagination) {
+                    setPagination(response.result.pagination);
+                }
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Load more transactions (called by AnalysisView)
+    const handleLoadMoreTransactions = async () => {
+        if (!walletResult || !pagination?.hasMore || loadingMore) return;
+
+        setLoadingMore(true);
+        try {
+            const newOffset = pagination.offset + pagination.limit;
+            const { transactions: newTxs, pagination: newPagination } = await loadMoreTransactions(
+                currentAnalysisAddress,
+                selectedChain,
+                newOffset,
+                100
+            );
+
+            // Append new transactions
+            setWalletResult(prev => prev ? {
+                ...prev,
+                transactions: [...prev.transactions, ...newTxs]
+            } : prev);
+            setPagination(newPagination);
+        } catch (err: any) {
+            console.error('Failed to load more transactions:', err.message);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
+    const handleCompareWallets = async () => {
+        const addresses = walletAddresses.filter(a => a.trim());
+        if (addresses.length < 2) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Free Tier Check (One tx covers the batch? Or per wallet? One per batch for UX)
+            let txHash;
+            if (profile?.tier === 'free') {
+                txHash = await checkFreeTierTx();
+            }
+
+            const response = await compareWallets(addresses, selectedChain, { txHash });
+            if (response.result) {
+                setMultiWalletResult(response.result);
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAnalyzeContract = async () => {
+        if (!contractAddress.trim()) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            let txHash;
+            if (profile?.tier === 'free') {
+                txHash = await checkFreeTierTx();
+            }
+
+            const response = await analyzeContract(contractAddress.trim(), selectedChain, { txHash });
+            if (response.result) {
+                setContractResult(response.result);
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddWallet = () => {
+        setWalletAddresses([...walletAddresses, '']);
+    };
+
+    const handleRemoveWallet = (index: number) => {
+        setWalletAddresses(walletAddresses.filter((_, i) => i !== index));
+    };
+
+    const handleWalletChange = (index: number, value: string) => {
+        const updated = [...walletAddresses];
+        updated[index] = value;
+        setWalletAddresses(updated);
+    };
 
     // Show auth loading state
     if (authLoading) {
