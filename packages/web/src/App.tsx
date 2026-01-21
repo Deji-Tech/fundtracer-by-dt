@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { parseEther } from 'ethers';
 import { ChainId, AnalysisResult, MultiWalletResult, getEnabledChains, CHAINS } from '@fundtracer/core';
 import { useAuth } from './contexts/AuthContext';
 import { analyzeWallet, compareWallets, analyzeContract, loadMoreTransactions, trackVisit } from './api';
@@ -31,7 +32,7 @@ function App() {
     }
 
     const { user, profile, loading: authLoading, getSigner } = useAuth();
-    const { parseEther } = require('ethers'); // Or import at top
+    // parseEther is imported at top level now
 
     const [viewMode, setViewMode] = useState<ViewMode>('wallet');
     const [selectedChain, setSelectedChain] = useState<ChainId>('ethereum');
