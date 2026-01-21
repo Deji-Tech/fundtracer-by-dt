@@ -100,10 +100,6 @@ export async function getProfile(): Promise<UserProfile> {
     return apiRequest('/api/user/profile');
 }
 
-export async function updateProfile(data: { displayName?: string; email?: string }): Promise<{ success: boolean; user: UserProfile }> {
-    return apiRequest('/api/user/profile', 'POST', data);
-}
-
 // Alchemy API key management
 export async function saveAlchemyKey(apiKey: string): Promise<{ success: boolean; message: string }> {
     return apiRequest('/api/user/alchemy-api-key', 'POST', { apiKey });
