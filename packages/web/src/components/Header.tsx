@@ -1,15 +1,15 @@
-import React from 'react';
-import { Settings, Github, Mail, Zap, MessageSquare } from 'lucide-react';
+import { Settings, Github, Mail, Zap, MessageSquare, User } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 interface HeaderProps {
     onSettingsClick?: () => void;
     onUpgradeClick?: () => void;
     onFeedbackClick?: () => void;
+    onProfileClick?: () => void;
     isUpgradeActive?: boolean;
 }
 
-function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick, isUpgradeActive }: HeaderProps) {
+function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick, onProfileClick, isUpgradeActive }: HeaderProps) {
     return (
         <header className="header">
             <div className="header-inner">
@@ -62,6 +62,16 @@ function Header({ onSettingsClick, onUpgradeClick, onFeedbackClick, isUpgradeAct
                     >
                         <Mail size={18} />
                     </a>
+                    {onProfileClick && (
+                        <button
+                            className="btn btn-ghost btn-icon"
+                            onClick={onProfileClick}
+                            aria-label="Profile"
+                            title="Your Profile"
+                        >
+                            <User size={18} />
+                        </button>
+                    )}
                     <button
                         className="btn btn-ghost btn-icon"
                         onClick={onSettingsClick}
