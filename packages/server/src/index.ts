@@ -94,7 +94,11 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' })); // Increased for large wallet lists
 
 // Initialize Firebase Admin
-initializeFirebase();
+try {
+    initializeFirebase();
+} catch (error) {
+    console.error('[WARN] Firebase initialization failed. Auth features may be limited.', error);
+}
 
 // Start Payment Listener
 // Start Payment Listener - robustly
