@@ -37,7 +37,7 @@ export default function UserManagement({ onUserUpdated }: Props) {
                 id: doc.id,
                 email: doc.data().email || '',
                 displayName: doc.data().displayName,
-                walletAddress: doc.data().walletAddress,
+                walletAddress: doc.data().walletAddress || doc.data().address || doc.id,
                 tier: doc.data().tier || 'free',
                 pohVerified: doc.data().pohVerified || false,
                 blacklisted: doc.data().blacklisted || false,
