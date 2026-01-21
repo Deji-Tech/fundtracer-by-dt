@@ -15,6 +15,7 @@ interface AuthContextType {
     signIn: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
+    getSigner: () => Promise<ethers.providers.JsonRpcSigner>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -142,6 +143,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             signIn,
             signOut,
             refreshProfile,
+            getSigner: async () => {
+                if (!walletProvider) throw new Error('Wallet not connected');
+                const provider = new ethers.providers.Web3Provider(walletProvider);
+                return provider.getSigner();
+            }
         }}>
             {children}
         </AuthContext.Provider>

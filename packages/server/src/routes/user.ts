@@ -71,6 +71,46 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
     }
 });
 
+// Update user profile
+router.post('/profile', async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { displayName, email } = req.body;
+
+    // Validate inputs
+    if (displayName && displayName.length > 50) {
+        return res.status(400).json({ error: 'Display name too long (max 50 chars)' });
+    }
+
+    try {
+        const db = getFirestore();
+        const userRef = db.collection('users').doc(req.user.uid);
+
+        const updates: any = {};
+        if (displayName) updates.displayName = displayName;
+        if (email) updates.email = email;
+
+        // Only update if there are changes
+        if (Object.keys(updates).length > 0) {
+            await userRef.set(updates, { merge: true });
+        }
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: {
+                uid: req.user.uid,
+                ...updates
+            }
+        });
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
 // Save Alchemy API key
 router.post('/alchemy-api-key', async (req: AuthenticatedRequest, res: Response) => {
     if (!req.user) {
