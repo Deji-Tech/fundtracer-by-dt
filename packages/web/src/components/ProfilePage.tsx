@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { updateProfile } from '../api';
-import { User, Shield, CheckCircle, AlertTriangle, Save, Camera, Mail } from 'lucide-react';
+import { User, Shield, CheckCircle, AlertTriangle, Save, Camera, Mail, ArrowLeft } from 'lucide-react';
 
-export default function ProfilePage() {
+interface ProfilePageProps {
+    onBack?: () => void;
+}
+
+export default function ProfilePage({ onBack }: ProfilePageProps) {
     const { user, profile, refreshProfile } = useAuth();
     const [name, setName] = useState(profile?.name || '');
     const [email, setEmail] = useState(profile?.email || '');
@@ -13,9 +17,9 @@ export default function ProfilePage() {
     React.useEffect(() => {
         if (profile) {
             setName(profile.name || '');
-            setEmail(profile.email || user?.address || '');
+            setEmail(profile.email || ''); // Don't fallback to address for email
         }
-    }, [profile, user]);
+    }, [profile]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,9 +43,21 @@ export default function ProfilePage() {
 
     return (
         <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto', padding: 'var(--space-6)' }}>
-            <h1 className="gradient-text" style={{ fontSize: 'var(--text-3xl)', marginBottom: 'var(--space-6)' }}>
-                Your Profile
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="btn btn-secondary btn-icon" // Assuming btn-icon exists or just use styling
+                        style={{ padding: '8px', borderRadius: '50%', minWidth: 'auto', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Back to Dashboard"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                )}
+                <h1 className="gradient-text" style={{ fontSize: 'var(--text-3xl)', margin: 0 }}>
+                    Your Profile
+                </h1>
+            </div>
 
             <div className="card" style={{ padding: 'var(--space-8)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'var(--space-8)' }}>
@@ -60,7 +76,7 @@ export default function ProfilePage() {
                         position: 'relative'
                     }}>
                         {name ? name[0].toUpperCase() : <User size={48} />}
-                        <button
+                        {/* <button
                             className="btn btn-secondary btn-sm"
                             style={{
                                 position: 'absolute',
@@ -73,7 +89,7 @@ export default function ProfilePage() {
                             title="Change Avatar (Coming Soon)"
                         >
                             <Camera size={16} />
-                        </button>
+                        </button> */}
                     </div>
                     <div style={{ textAlign: 'center' }}>
                         <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600 }}>{name || 'Anonymous User'}</h2>
@@ -185,11 +201,11 @@ export default function ProfilePage() {
                                 placeholder="For notifications"
                                 className="input"
                                 style={{ paddingLeft: '36px' }}
-                                disabled={true} // Disabled for now as it's typically linked to auth
+                            // disabled={true} // Enabled now
                             />
                         </div>
                         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
-                            Linked to your wallet address
+                            Used for strictly important updates only.
                         </p>
                     </div>
 
