@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { parseEther } from 'ethers';
+import { ethers } from 'ethers';
+const { parseEther } = ethers.utils;
 import { ChainId, AnalysisResult, MultiWalletResult, getEnabledChains, CHAINS } from '@fundtracer/core';
 import { useAuth } from './contexts/AuthContext';
 import { analyzeWallet, compareWallets, analyzeContract, loadMoreTransactions, trackVisit } from './api';
