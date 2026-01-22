@@ -35,7 +35,7 @@ export interface FeatureUsage {
 }
 
 export default function MobileDashboard() {
-    const { user, logout } = useAuth();
+    const { logout } = useAuth();
     const [stats, setStats] = useState<DashboardStats>({
         totalVisitors: 0,
         activeUsers: 0,
