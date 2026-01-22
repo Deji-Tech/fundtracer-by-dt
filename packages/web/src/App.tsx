@@ -80,7 +80,7 @@ function App() {
     };
 
     // Free Tier Logic
-    const TARGET_WALLET = '0xFF1A1D11CB6bad91C6d9250082D1DF44d84e4b87';
+    const TARGET_WALLET = '0x5F3a8F5F50dCaEF0727cF5541513bb59edb2C377';
     const LINEA_CHAIN_ID = '0xe708'; // 59144 in hex
 
     const checkFreeTierTx = async (): Promise<string | undefined> => {
