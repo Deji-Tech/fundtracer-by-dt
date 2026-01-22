@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, collection } from 'firebase/firestore';
 import { Search, Edit2, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 interface User {
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function UserManagement({ onUserUpdated }: Props) {
+    const { user } = useAuth();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -32,18 +34,31 @@ export default function UserManagement({ onUserUpdated }: Props) {
 
     const loadUsers = async () => {
         try {
-            const usersSnap = await getDocs(collection(db, 'users'));
-            const usersData = usersSnap.docs.map(doc => ({
-                id: doc.id,
-                email: doc.data().email || '',
-                displayName: doc.data().displayName,
-                walletAddress: doc.data().walletAddress || doc.data().address || doc.id,
-                tier: doc.data().tier || 'free',
-                pohVerified: doc.data().pohVerified || false,
-                blacklisted: doc.data().blacklisted || false,
-                analysisCount: doc.data().analysisCount || 0,
-                createdAt: doc.data().createdAt || Date.now(),
-                lastActive: doc.data().lastActive,
+            setLoading(true);
+            const token = await user?.getIdToken();
+            if (!token) return;
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/users`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch users');
+
+            const data = await response.json();
+
+            const usersData = data.users.map((u: any) => ({
+                id: u.id,
+                email: u.email || '',
+                displayName: u.displayName,
+                walletAddress: u.walletAddress || u.address || u.id,
+                tier: u.tier || 'free',
+                pohVerified: u.pohVerified || false,
+                blacklisted: u.blacklisted || false,
+                analysisCount: u.analysisCount || 0,
+                createdAt: u.createdAt || Date.now(),
+                lastActive: u.lastActive,
             })) as User[];
 
             usersData.sort((a, b) => b.createdAt - a.createdAt);

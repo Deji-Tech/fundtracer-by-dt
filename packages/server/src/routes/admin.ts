@@ -100,4 +100,22 @@ router.get('/stats', requireAdmin, async (req: AuthenticatedRequest, res: Respon
     }
 });
 
+// Get All Users
+router.get('/users', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const db = getFirestore();
+        const usersSnap = await db.collection('users').get();
+
+        const users = usersSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        res.json({ users });
+    } catch (error) {
+        console.error('Admin Users Error:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
 export { router as adminRoutes };
