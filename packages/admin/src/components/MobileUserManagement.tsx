@@ -140,7 +140,6 @@ export default function UserManagement({ onUserUpdated }: Props) {
     }
 
     return (
-    return (
         <div className="card" style={{ boxShadow: 'none', border: 'none', background: 'transparent', padding: 0 }}>
             <div style={{ marginBottom: 'var(--space-4)' }}>
                 <h3 className="card-title" style={{ marginBottom: 'var(--space-4)' }}>User Management</h3>
