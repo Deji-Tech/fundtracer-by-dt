@@ -39,7 +39,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                         <div className="tier-features">
                             <span>✓ 30 days access</span>
                             <span>✓ No gas fees</span>
-                            <span>✓ Unlimited analyses</span>
+                            <span>✓ 25 daily analyses</span>
                         </div>
                     </div>
 
@@ -51,7 +51,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                         </div>
                         <div className="tier-features">
                             <span>✓ 30 days access</span>
-                            <span>✓ Premium perks</span>
+                            <span>✓ Unlimited analyses</span>
                             <span>✓ Sybil detection</span>
                             <span>✓ API access</span>
                         </div>

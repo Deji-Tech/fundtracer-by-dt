@@ -35,7 +35,7 @@ export interface FeatureUsage {
 }
 
 export default function MobileDashboard() {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const [stats, setStats] = useState<DashboardStats>({
         totalVisitors: 0,
         activeUsers: 0,
@@ -68,63 +68,35 @@ export default function MobileDashboard() {
 
     const loadDashboardData = async () => {
         try {
-            console.log('[Dashboard] Starting data load...');
-            console.log('[Dashboard] Firestore db:', db);
+            console.log('[MobileDashboard] Starting data load via API...');
+            setLoading(true);
 
-            // Load user stats
-            const usersSnap = await getDocs(collection(db, 'users'));
-            const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Get current user token
+            const token = await user?.getIdToken();
+            if (!token) {
+                console.error('No auth token available');
+                return;
+            }
 
-            const pohVerified = users.filter((u: any) => u.pohVerified === true).length;
-            const freeUsers = users.filter((u: any) => u.tier === 'free' || !u.tier).length;
-            const proUsers = users.filter((u: any) => u.tier === 'pro').length;
-            const maxUsers = users.filter((u: any) => u.tier === 'max').length;
-            const blacklistedUsers = users.filter((u: any) => u.blacklisted === true).length;
-
-            // Load revenue
-            const revenueSnap = await getDocs(collection(db, 'analytics', 'revenue', 'payments'));
-            const totalRevenue = revenueSnap.docs.reduce((sum, doc) => sum + (doc.data().amount || 0), 0);
-
-            // Load analytics
-            const analyticsSnap = await getDocs(collection(db, 'analytics', 'daily_stats', 'records'));
-            const analyticsData = analyticsSnap.docs.map(doc => doc.data());
-
-            const totalAnalyses = analyticsData.reduce((sum: number, day: any) => sum + (day.analysisCount || 0), 0);
-
-            // Chain usage
-            const chainStats = analyticsData.reduce((acc: any, day: any) => {
-                acc.ethereum += day.chainUsage?.ethereum || 0;
-                acc.arbitrum += day.chainUsage?.arbitrum || 0;
-                acc.base += day.chainUsage?.base || 0;
-                acc.linea += day.chainUsage?.linea || 0;
-                return acc;
-            }, { ethereum: 0, arbitrum: 0, base: 0, linea: 0 });
-
-            // Feature usage
-            const featureStats = analyticsData.reduce((acc: any, day: any) => {
-                acc.wallet += day.featureUsage?.wallet || 0;
-                acc.compare += day.featureUsage?.compare || 0;
-                acc.sybil += day.featureUsage?.sybil || 0;
-                acc.contract += day.featureUsage?.contract || 0;
-                return acc;
-            }, { wallet: 0, compare: 0, sybil: 0, contract: 0 });
-
-            setStats({
-                totalVisitors: users.length,
-                activeUsers: users.length,
-                pohVerifiedUsers: pohVerified,
-                totalRevenue,
-                totalAnalyses,
-                freeUsers,
-                proUsers,
-                maxUsers,
-                blacklistedUsers,
+            // Fetch stats from server
+            const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/stats`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
-            setChainUsage(chainStats);
-            setFeatureUsage(featureStats);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch stats: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            setStats(data.stats);
+            setChainUsage(data.chainUsage);
+            setFeatureUsage(data.featureUsage);
+
         } catch (error) {
-            console.error('[Dashboard] Error loading dashboard data:', error);
+            console.error('[MobileDashboard] Error loading data:', error);
         } finally {
             setLoading(false);
         }

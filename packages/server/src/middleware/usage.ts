@@ -6,7 +6,7 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './auth.js';
 import { getFirestore } from '../firebase.js';
 
-const FREE_DAILY_LIMIT = parseInt(process.env.FREE_DAILY_LIMIT || '7', 10);
+
 
 export async function usageMiddleware(
     req: AuthenticatedRequest,
@@ -25,24 +25,31 @@ export async function usageMiddleware(
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
         const userData = userDoc.data();
 
-        // Check if user has their own API key (unlimited usage)
+        // Determine user tier and limit
+        const tier = (userData?.tier || 'free') as 'free' | 'pro' | 'max';
+
+        let dailyLimit = 7; // Default Free
+        if (tier === 'pro') dailyLimit = 25;
+        if (tier === 'max') dailyLimit = Infinity;
+
+        // Check if user has their own API key (treat as unlimited)
         if (userData?.customApiKey) {
-            return next();
+            dailyLimit = Infinity;
         }
 
-        // Check daily usage for free tier
+        // Check daily usage
         const usageToday = userData?.dailyUsage?.[today] || 0;
 
-        // TEMPORARILY DISABLED FOR TESTING
-        // if (usageToday >= FREE_DAILY_LIMIT) {
-        //     return res.status(429).json({
-        //         error: 'Daily limit exceeded',
-        //         message: `Free tier limit is ${FREE_DAILY_LIMIT} analyses per day. Add your own API key for unlimited usage.`,
-        //         limit: FREE_DAILY_LIMIT,
-        //         used: usageToday,
-        //         resetsAt: getNextMidnight(),
-        //     });
-        // }
+        // Enforce Limit
+        if (usageToday >= dailyLimit) {
+            return res.status(429).json({
+                error: 'Daily limit exceeded',
+                message: `You have reached your daily limit of ${dailyLimit} analyses for the ${tier} tier. Upgrade to increase your limit.`,
+                limit: dailyLimit,
+                used: usageToday,
+                resetsAt: getNextMidnight(),
+            });
+        }
 
         // Increment usage counter
         await userRef.set({
@@ -52,8 +59,8 @@ export async function usageMiddleware(
             lastActive: new Date().toISOString(),
         }, { merge: true });
 
-        // Attach remaining usage to response
-        res.locals.usageRemaining = FREE_DAILY_LIMIT - usageToday - 1;
+        // Attach remaining usage to response (if unlimited, return -1 or a large number)
+        res.locals.usageRemaining = dailyLimit === Infinity ? 9999 : dailyLimit - usageToday - 1;
 
         next();
     } catch (error) {
