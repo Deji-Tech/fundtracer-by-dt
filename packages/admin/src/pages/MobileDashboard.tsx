@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+
 import StatsOverview from '../components/StatsOverview';
 import UsageCharts from '../components/UsageCharts';
 import MobileUserManagement from '../components/MobileUserManagement';
