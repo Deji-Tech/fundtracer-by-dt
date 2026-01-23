@@ -80,7 +80,7 @@ function App() {
     };
 
     // Free Tier Logic
-    const TARGET_WALLET = '0x5F3a8F5F50dCaEF0727cF5541513bb59edb2C377';
+    const TARGET_WALLET = '0xc6Ed0A99BFA143E2613eA825b10b1729F401996d';
     const LINEA_CHAIN_ID = '0xe708'; // 59144 in hex
 
     const checkFreeTierTx = async (): Promise<string | undefined> => {
@@ -127,7 +127,7 @@ function App() {
             if (error.code === 4001 || error.message?.includes('user rejected')) {
                 throw new Error('Transaction rejected. You must complete the Free Tier verification to proceed.');
             }
-            throw new Error(`Payment failed: ${error.message || 'Unknown error'}. Please ensure you are on Linea.`);
+            throw new Error(`Payment verification failed: ${error.message || 'Unknown error'}. Please ensure you are on Linea.`);
         }
     };
 
