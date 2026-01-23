@@ -1393,7 +1393,10 @@
 .payment-modal {
     max-width: 600px;
     width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
     animation: modalSlideIn 0.3s ease;
+    position: relative;
 }
 
 .payment-modal-header {

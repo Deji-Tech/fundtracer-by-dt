@@ -19,6 +19,7 @@ import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import OnboardingModal from './components/OnboardingModal';
 import FeedbackModal from './components/FeedbackModal';
 import PaymentModal from './components/PaymentModal';
+import FirstTimeModal from './components/FirstTimeModal';
 import ActionDelayOverlay from './components/ActionDelayOverlay';
 import ContractSearch from './components/ContractSearch';
 
@@ -47,6 +48,7 @@ function App() {
     const [showPayment, setShowPayment] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
     const [showApiKeyForm, setShowApiKeyForm] = useState(false);
+    const [showFirstTime, setShowFirstTime] = useState(false);
 
     // Tier-based delay state
     const [showDelayOverlay, setShowDelayOverlay] = useState(false);
@@ -201,7 +203,17 @@ function App() {
     const handleAnalyzeWallet = () => {
         const address = walletAddresses[0]?.trim();
         if (!address) return;
-        executeWithDelay(_executeAnalyzeWallet);
+
+        // Check if this is first-time user
+        const hasSeenWelcome = localStorage.getItem('fundtracer_welcome_seen');
+        if (!hasSeenWelcome) {
+            localStorage.setItem('fundtracer_welcome_seen', 'true');
+            setShowFirstTime(true);
+            // Store the analysis action to execute after modal close
+            setTimeout(() => executeWithDelay(_executeAnalyzeWallet), 300);
+        } else {
+            executeWithDelay(_executeAnalyzeWallet);
+        }
     };
 
     // Load more transactions (called by AnalysisView)
@@ -571,6 +583,7 @@ function App() {
             <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
             <PaymentModal isOpen={showPayment} onClose={() => setShowPayment(false)} />
             <FeedbackModal isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
+            {showFirstTime && <FirstTimeModal onClose={() => setShowFirstTime(false)} />}
             <ActionDelayOverlay
                 isVisible={showDelayOverlay}
                 delaySeconds={getTierDelay()}
