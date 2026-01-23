@@ -16158,5 +16158,215 @@
     "name": "PredatorV5",
     "type": "contract",
     "source": "lineascan-verified"
+  },
+  "0x5f3a8f5f50dcaef0727cf5541513bb59edb2c377": {
+    "name": "FundTracer",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xe6eb8344c6d6ff331dae224625d2a96deea68f2a": {
+    "name": "DaimoPayExecutor",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xb2dafb498057339105c20f1d37f0a70f20bce734": {
+    "name": "DepositAddressManager",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x11aa062106f7aba92c0f626a5a5e749da6b10761": {
+    "name": "SwapMath",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x645e8096781d98810226595b3e2411b5ccc4899e": {
+    "name": "GasZipPeriphery",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xb97bc04474bb7f3eaf0f5723905c7e1c81aa554a": {
+    "name": "FlashRedeemer_Algebra",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x6bdcd1878525a0130da6e506382a29687e8d9ca7": {
+    "name": "FulfillHelper",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x529863940bf6065d8c122a550c2ff37c1cfefa16": {
+    "name": "EthWrapper",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xf2fcd6bf44453f2e816a84e1f9febf8a70653d9d": {
+    "name": "DecubateVestingV3",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xeec8779f1dfd5ab1d136f2ed8be1cc4272945f9d": {
+    "name": "FlashRedeemer_Algebra",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xac3fc66a4bfa086b9f888cdb6e5f46ba7459e517": {
+    "name": "ERC1967Proxy",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xdf4aacf64675298b3a4de0109b63a598a5bb42f2": {
+    "name": "LendRewards",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xe6311c46841d6953d3ebc035cddcc2f10c9d821c": {
+    "name": "Bitxen",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x3ce3585d2fa9afb4101fd6007b0839ddcb5b9599": {
+    "name": "TokenBridgeCctpV2",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xaae9525cc75ba30982c9a84068460dd62ac07053": {
+    "name": "EIP7702Executor",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x2a743bd570719e57d9ae083cfeec9c66f3ef354c": {
+    "name": "BorgedERC1967Proxy",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xbeee5053f19a53015a15173c755a8af5ed27bfe4": {
+    "name": "RewardDistributor",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x591cf1448fab5a78423472a7afa338443e192dcc": {
+    "name": "NFT",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xc216f05eb5a9b33f1c4ba9ab82ab8e77d8f46fa3": {
+    "name": "LineaRacing",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x3b16055bba95a36925b02819a07de8ff1f35476f": {
+    "name": "SwiftDest",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x4bf9de6ca9597ed3ae581fac2f9b02a2e6702622": {
+    "name": "SwiftSource",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x06ae64327c07740d2c87aed1f4b0e32222de9284": {
+    "name": "FeeManager",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x4cff6cd0aeebcfa95b19bfa187718c3432bc38ca": {
+    "name": "TarazVerifier",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x62ae8f4973e0cf2719bd6ea287c65dd6c6f73c84": {
+    "name": "FlashRedeemer_Algebra",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x5e0d0d86d4c050cb50b9a10bb592685109c14dd0": {
+    "name": "mErc20Host",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xf4d793577ae0923d6709e264022e0e175b8f6d8b": {
+    "name": "FlashRedeemer_Algebra",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xab0e60e41e1098337fce6403f6b45f433b5052f8": {
+    "name": "FlashRedeemer_Algebra",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xa8321942a91fbea3b5a631f60305d61bc0a27a19": {
+    "name": "TransparentUpgradeableProxy",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xab0fa300b0a7c256ffd4ab8325563912e69a5236": {
+    "name": "AccessHub",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x1af0d33365bbe309baa99bc042eb92bdf753542d": {
+    "name": "ApexStakedLineaVault",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x23121a0c219239afba684fca4578bd994331c033": {
+    "name": "TransparentUpgradeableProxy",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x84560a39adcf043036046aa82a3e7fee8631639b": {
+    "name": "RewardSink",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xa2be5e40328e5d8ae90dd1424964508c5b253ef6": {
+    "name": "mErc20Host",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xf258c04525fd439996a8bf38c02e0f08474c0654": {
+    "name": "DaimoPayExecutor",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x9bd3db23d35df4ac89848966fa920e97536654af": {
+    "name": "DaimoPayRelayer",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x57e0a34229122bf9091477c466caa73ae35d9e7b": {
+    "name": "DepositAddressManager",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x030d7844170333b2340d92b11200599fae82e876": {
+    "name": "LBUSDProxy",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xc6d8e5c2d4adec5a4ae7531fdeaae1d1ea1d4ad3": {
+    "name": "LBUSD",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x39ced541ab42b2992bf86baac36ebb2d3cb48605": {
+    "name": "MockUSDC",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xc6ed0a99bfa143e2613ea825b10b1729f401996d": {
+    "name": "FundTracer",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0xc71571c76ca780b7a056bcc98123e90f3b95ffb0": {
+    "name": "PermissionedMulticall3",
+    "type": "contract",
+    "source": "lineascan-verified"
+  },
+  "0x35e383bcc32f5daa451082e08246369186c9110c": {
+    "name": "FundTracer",
+    "type": "contract",
+    "source": "lineascan-verified"
   }
 }

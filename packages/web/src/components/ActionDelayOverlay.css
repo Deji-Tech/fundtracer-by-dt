@@ -1,0 +1,224 @@
+.action-delay-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.delay-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.delay-ring-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delay-glow-ring {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px solid;
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+.delay-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.delay-particles .particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    animation: orbitParticle 3s linear infinite;
+    animation-delay: var(--delay);
+}
+
+@keyframes orbitParticle {
+    0% {
+        transform: rotate(var(--rotation)) translateX(70px) scale(0.5);
+        opacity: 0;
+    }
+
+    25% {
+        opacity: 1;
+        transform: rotate(calc(var(--rotation) + 90deg)) translateX(70px) scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: rotate(calc(var(--rotation) + 180deg)) translateX(70px) scale(0.8);
+    }
+
+    75% {
+        opacity: 0.5;
+        transform: rotate(calc(var(--rotation) + 270deg)) translateX(70px) scale(0.6);
+    }
+
+    100% {
+        transform: rotate(calc(var(--rotation) + 360deg)) translateX(70px) scale(0.5);
+        opacity: 0;
+    }
+}
+
+.delay-progress-ring {
+    width: 120px;
+    height: 120px;
+    transform: rotate(-90deg);
+    position: relative;
+    z-index: 2;
+}
+
+.delay-progress-ring .progress-bg {
+    opacity: 0.3;
+}
+
+.delay-progress-ring .progress-bar {
+    transition: stroke-dashoffset 0.1s linear;
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.delay-center {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+}
+
+.delay-timer {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    text-shadow: 0 0 20px currentColor;
+    animation: timerPulse 1s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.delay-text {
+    text-align: center;
+    color: #fff;
+}
+
+.delay-text h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.delay-tier-info {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0 0 0.75rem;
+}
+
+.delay-upgrade-hint {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+    animation: hintPulse 2s ease-in-out infinite;
+}
+
+.delay-upgrade-hint strong {
+    color: #8b5cf6;
+}
+
+@keyframes hintPulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .delay-ring-container {
+        width: 140px;
+        height: 140px;
+    }
+
+    .delay-glow-ring {
+        width: 120px;
+        height: 120px;
+    }
+
+    .delay-progress-ring {
+        width: 100px;
+        height: 100px;
+    }
+
+    .delay-timer {
+        font-size: 2rem;
+    }
+
+    .delay-text h3 {
+        font-size: 1.25rem;
+    }
+}
