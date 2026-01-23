@@ -177,7 +177,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: strin
 // Helper to validate Free Tier transaction
 import { JsonRpcProvider } from 'ethers';
 
-const TARGET_WALLET = '0xFF1A1D11CB6bad91C6d9250082D1DF44d84e4b87';
+const TARGET_WALLET = '0x5F3a8F5F50dCaEF0727cF5541513bb59edb2C377';
 // Use Linea RPC for validation if the payment is on Linea. 
 // However, the prompt says "send gas", normally implies the chain they are analyzing?
 // Actually, "Free Tier users must transact... to a target wallet". Usually this means on the chain they are using, OR a specific payment chain. 
@@ -187,22 +187,38 @@ const TARGET_WALLET = '0xFF1A1D11CB6bad91C6d9250082D1DF44d84e4b87';
 const LINEA_RPC = 'https://rpc.linea.build';
 
 async function validateFreeTierTx(txHash: string, userAddress: string): Promise<boolean> {
-    try {
-        const provider = new JsonRpcProvider(LINEA_RPC);
-        const tx = await provider.getTransaction(txHash);
+    const maxRetries = 3;
+    let attempt = 0;
 
-        if (!tx) return false;
-        if (tx.from.toLowerCase() !== userAddress.toLowerCase()) return false;
-        if (tx.to?.toLowerCase() !== TARGET_WALLET.toLowerCase()) return false;
+    while (attempt < maxRetries) {
+        try {
+            const provider = new JsonRpcProvider(LINEA_RPC);
+            const tx = await provider.getTransaction(txHash);
 
-        // Ensure recent
-        // For strictness, check block number, but simple existence is a start.
-        // A replay attack is possible without checking DB, but acceptable for hackathon MVP.
-        return true;
-    } catch (e) {
-        console.error('Tx Validation Error:', e);
-        return false;
+            if (!tx) {
+                console.log(`[Validation] Tx ${txHash} not found (attempt ${attempt + 1}/${maxRetries})`);
+                attempt++;
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
+            }
+
+            if (tx.from.toLowerCase() !== userAddress.toLowerCase()) {
+                console.warn(`[Validation] Mismatch Sender: ${tx.from} !== ${userAddress}`);
+                return false;
+            }
+            if (tx.to?.toLowerCase() !== TARGET_WALLET.toLowerCase()) {
+                console.warn(`[Validation] Mismatch Target: ${tx.to} !== ${TARGET_WALLET}`);
+                return false;
+            }
+
+            return true;
+        } catch (e) {
+            console.error('Tx Validation Error:', e);
+            attempt++;
+            await new Promise(r => setTimeout(r, 1000));
+        }
     }
+    return false;
 }
 
 // Analyze a single wallet
