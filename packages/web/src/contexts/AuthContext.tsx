@@ -94,11 +94,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [walletProvider, address]);
 
+    // Detect if running in mobile browser
+    const isMobileBrowser = () => {
+        const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+        return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua.toLowerCase());
+    };
+
+    // Check if MetaMask is available
+    const hasInjectedWallet = () => {
+        return typeof window !== 'undefined' && (window as any).ethereum;
+    };
+
+    // Open MetaMask app via deep link
+    const openMetaMaskDeepLink = () => {
+        const currentUrl = encodeURIComponent(window.location.href);
+        const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+        window.location.href = metamaskDeepLink;
+    };
+
     const signIn = async () => {
         // If already connected, complete sign-in immediately
         if (isConnected && walletProvider && address) {
             await completeSignIn();
             return;
+        }
+
+        // Mobile browser without injected wallet - offer MetaMask deep link
+        if (isMobileBrowser() && !hasInjectedWallet()) {
+            const useMetaMask = window.confirm(
+                'No wallet detected. Would you like to open MetaMask app?\n\nClick OK to open MetaMask, or Cancel to try WalletConnect.'
+            );
+
+            if (useMetaMask) {
+                openMetaMaskDeepLink();
+                return;
+            }
         }
 
         // Otherwise, open modal and set pending flag
