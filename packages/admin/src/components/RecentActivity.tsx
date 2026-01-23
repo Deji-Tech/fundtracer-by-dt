@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { useAuth } from '../contexts/AuthContext';
 import { Activity, DollarSign, User, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -14,49 +13,43 @@ interface ActivityItem {
 }
 
 export default function RecentActivity() {
+    const { user } = useAuth();
     const [activities, setActivities] = useState<ActivityItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadRecentActivity();
-    }, []);
+    }, [user]);
 
     const loadRecentActivity = async () => {
         try {
-            // Load admin actions
-            const actionsSnap = await getDocs(
-                query(collection(db, 'admin_actions'), orderBy('timestamp', 'desc'), limit(20))
-            );
+            setError(null);
 
-            const adminActions = actionsSnap.docs.map(doc => ({
-                id: doc.id,
-                type: doc.data().action as any,
-                userId: doc.data().userId,
-                details: doc.data(),
-                timestamp: doc.data().timestamp,
-            }));
+            // Get current user token
+            const token = await user?.getIdToken();
+            if (!token) {
+                console.error('No auth token available');
+                setError('Authentication required');
+                return;
+            }
 
-            // Load recent payments
-            const paymentsSnap = await getDocs(
-                query(collection(db, 'analytics', 'revenue', 'payments'), orderBy('timestamp', 'desc'), limit(10))
-            );
+            // Fetch activity from server API
+            const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/activity`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-            const payments = paymentsSnap.docs.map(doc => ({
-                id: doc.id,
-                type: 'payment' as const,
-                userId: doc.data().userId,
-                userEmail: doc.data().userEmail,
-                details: doc.data(),
-                timestamp: doc.data().timestamp,
-            }));
+            if (!response.ok) {
+                throw new Error(`Failed to fetch activity: ${response.statusText}`);
+            }
 
-            const combined = [...adminActions, ...payments]
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .slice(0, 20);
-
-            setActivities(combined);
-        } catch (error) {
+            const data = await response.json();
+            setActivities(data.activities || []);
+        } catch (error: any) {
             console.error('Error loading recent activity:', error);
+            setError(error.message || 'Failed to load activity');
         } finally {
             setLoading(false);
         }
@@ -118,7 +111,11 @@ export default function RecentActivity() {
             <h3 className="card-title">Recent Activity</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                {activities.length === 0 ? (
+                {error ? (
+                    <p style={{ color: 'var(--color-danger)', textAlign: 'center', padding: 'var(--space-6)' }}>
+                        {error}
+                    </p>
+                ) : activities.length === 0 ? (
                     <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: 'var(--space-6)' }}>
                         No recent activity
                     </p>
