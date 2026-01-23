@@ -117,7 +117,7 @@ function App() {
             // Send Transaction (Contract Call)
             const abi = ["function addTraceLog(string _msg) public"];
             const contract = new ethers.Contract(TARGET_WALLET, abi, signer);
-            const tx = await contract.addTraceLog("Verify FundTracer Access");
+            const tx = await contract.addTraceLog("Analyse Wallet");
 
             return tx.hash;
         } catch (error: any) {
