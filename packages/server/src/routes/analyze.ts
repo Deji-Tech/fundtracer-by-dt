@@ -177,7 +177,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: strin
 // Helper to validate Free Tier transaction
 import { JsonRpcProvider } from 'ethers';
 
-const TARGET_WALLET = '0x35E383bCC32F5daA451082e08246369186C9110c';
+const TARGET_WALLET = '0x4436977aCe641EdfE5A83b0d974Bd48443a448fd';
 // Use Linea RPC for validation if the payment is on Linea. 
 // However, the prompt says "send gas", normally implies the chain they are analyzing?
 // Actually, "Free Tier users must transact... to a target wallet". Usually this means on the chain they are using, OR a specific payment chain. 

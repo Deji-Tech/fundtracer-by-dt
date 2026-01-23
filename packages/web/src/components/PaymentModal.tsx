@@ -8,7 +8,7 @@ interface PaymentModalProps {
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
     const [copied, setCopied] = React.useState(false);
-    const paymentAddress = '0x35E383bCC32F5daA451082e08246369186C9110c';
+    const paymentAddress = '0x4436977aCe641EdfE5A83b0d974Bd48443a448fd';
 
     const handleCopy = () => {
         navigator.clipboard.writeText(paymentAddress);
@@ -40,6 +40,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                             <span>✓ 30 days access</span>
                             <span>✓ No gas fees</span>
                             <span>✓ 25 daily analyses</span>
+                            <span>✓ 2s action delay</span>
                         </div>
                     </div>
 
@@ -54,6 +55,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
                             <span>✓ Unlimited analyses</span>
                             <span>✓ Sybil detection</span>
                             <span>✓ API access</span>
+                            <span className="tier-highlight">⚡ No action delay!</span>
                         </div>
                     </div>
                 </div>

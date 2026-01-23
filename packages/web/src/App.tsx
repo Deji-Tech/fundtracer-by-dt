@@ -19,6 +19,7 @@ import PrivacyPolicyModal from './components/PrivacyPolicyModal';
 import OnboardingModal from './components/OnboardingModal';
 import FeedbackModal from './components/FeedbackModal';
 import PaymentModal from './components/PaymentModal';
+import ActionDelayOverlay from './components/ActionDelayOverlay';
 import ContractSearch from './components/ContractSearch';
 
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
@@ -46,6 +47,10 @@ function App() {
     const [showPayment, setShowPayment] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
     const [showApiKeyForm, setShowApiKeyForm] = useState(false);
+
+    // Tier-based delay state
+    const [showDelayOverlay, setShowDelayOverlay] = useState(false);
+    const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
 
     // Analysis state
     // Analysis state
@@ -79,8 +84,40 @@ function App() {
         setSelectedChain(chainId);
     };
 
+    // Tier-based delay configuration (in seconds)
+    const getTierDelay = (): number => {
+        const tier = profile?.tier || 'free';
+        switch (tier) {
+            case 'free': return 6;
+            case 'pro': return 2;
+            case 'max': return 0;
+            default: return 6;
+        }
+    };
+
+    // Wrapper to execute action with tier delay
+    const executeWithDelay = async (action: () => Promise<void>) => {
+        const delay = getTierDelay();
+        if (delay === 0) {
+            // Max tier - no delay, execute immediately
+            await action();
+        } else {
+            // Show delay overlay first, then execute
+            setPendingAction(() => action);
+            setShowDelayOverlay(true);
+        }
+    };
+
+    const handleDelayComplete = async () => {
+        setShowDelayOverlay(false);
+        if (pendingAction) {
+            await pendingAction();
+            setPendingAction(null);
+        }
+    };
+
     // Free Tier Logic
-    const TARGET_WALLET = '0x35E383bCC32F5daA451082e08246369186C9110c';
+    const TARGET_WALLET = '0x4436977aCe641EdfE5A83b0d974Bd48443a448fd';
     const LINEA_CHAIN_ID = '0xe708'; // 59144 in hex
 
     const checkFreeTierTx = async (): Promise<string | undefined> => {
@@ -130,7 +167,7 @@ function App() {
         }
     };
 
-    const handleAnalyzeWallet = async () => {
+    const _executeAnalyzeWallet = async () => {
         const address = walletAddresses[0]?.trim();
         if (!address) return;
 
@@ -161,6 +198,12 @@ function App() {
         }
     };
 
+    const handleAnalyzeWallet = () => {
+        const address = walletAddresses[0]?.trim();
+        if (!address) return;
+        executeWithDelay(_executeAnalyzeWallet);
+    };
+
     // Load more transactions (called by AnalysisView)
     const handleLoadMoreTransactions = async () => {
         if (!walletResult || !pagination?.hasMore || loadingMore) return;
@@ -188,7 +231,7 @@ function App() {
         }
     };
 
-    const handleCompareWallets = async () => {
+    const _executeCompareWallets = async () => {
         const addresses = walletAddresses.filter(a => a.trim());
         if (addresses.length < 2) return;
 
@@ -213,7 +256,13 @@ function App() {
         }
     };
 
-    const handleAnalyzeContract = async () => {
+    const handleCompareWallets = () => {
+        const addresses = walletAddresses.filter(a => a.trim());
+        if (addresses.length < 2) return;
+        executeWithDelay(_executeCompareWallets);
+    };
+
+    const _executeAnalyzeContract = async () => {
         if (!contractAddress.trim()) return;
 
         setLoading(true);
@@ -234,6 +283,11 @@ function App() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAnalyzeContract = () => {
+        if (!contractAddress.trim()) return;
+        executeWithDelay(_executeAnalyzeContract);
     };
 
     const handleAddWallet = () => {
@@ -517,6 +571,12 @@ function App() {
             <OnboardingModal isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
             <PaymentModal isOpen={showPayment} onClose={() => setShowPayment(false)} />
             <FeedbackModal isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
+            <ActionDelayOverlay
+                isVisible={showDelayOverlay}
+                delaySeconds={getTierDelay()}
+                onComplete={handleDelayComplete}
+                tier={(profile?.tier as 'free' | 'pro' | 'max') || 'free'}
+            />
         </div>
     );
 }
