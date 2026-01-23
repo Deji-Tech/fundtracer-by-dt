@@ -5,7 +5,10 @@ import { useState, useEffect } from 'react';
  * Returns true if viewport width < 768px.
  */
 export function useIsMobile(): boolean {
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => {
+        // Initialize with actual check instead of false to prevent mobile flash
+        return typeof window !== 'undefined' && window.innerWidth < 768;
+    });
 
     useEffect(() => {
         const checkMobile = () => {
