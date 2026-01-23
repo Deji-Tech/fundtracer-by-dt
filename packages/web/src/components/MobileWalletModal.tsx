@@ -82,7 +82,9 @@ const MobileWalletModal: React.FC<MobileWalletModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     const handleWalletClick = (wallet: WalletOption) => {
-        window.location.href = wallet.deepLink;
+        // Use window.open to keep current tab alive
+        window.open(wallet.deepLink, '_blank');
+        onClose();
     };
 
     return (

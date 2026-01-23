@@ -221,6 +221,7 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
     const [showValues, setShowValues] = useState(true);
     const [filterMinValue, setFilterMinValue] = useState(0);
     const [hoveredNode, setHoveredNode] = useState<FundingNode | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Mobile state
     const [showMobileGraph, setShowMobileGraph] = useState(false);
@@ -328,6 +329,8 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
         if (!svgRef.current || !containerRef.current || !node) return;
 
         try {
+            setError(null); // Clear previous errors
+
             const container = containerRef.current;
             // Fullscreen check logic: if global fullscreen OR mobile graph mode
             const isGraphFullscreen = isFullscreen || (isMobile && showMobileGraph);
@@ -358,15 +361,18 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
             const zoom = d3.zoom<SVGSVGElement, unknown>()
                 .scaleExtent([0.1, 4])
                 .on('zoom', (event) => {
-                    g.attr('transform', event.transform);
-                    setZoomLevel(event.transform.k);
+                    if (gRef.current) {
+                        gRef.current.attr('transform', event.transform);
+                        setZoomLevel(event.transform.k);
+                    }
                 });
 
             zoomRef.current = zoom;
             svg.call(zoom);
 
-            // Filter collapsed nodes
+            // Filter collapsed nodes (validation added)
             const filterCollapsed = (n: FundingNode): FundingNode => {
+                if (!n) return { address: 'invalid', children: [], totalValue: 0, chain: 'ethereum' } as any;
                 const children = n.children || [];
                 if (collapsedNodes.has(n.address)) {
                     return { ...n, children: [] };
@@ -376,21 +382,15 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
 
             const filteredNode = filterCollapsed(node);
 
-            // Has children map for indicators
-            const hasChildrenMap = new Set<string>();
-            const buildChildrenMap = (n: FundingNode) => {
-                if (n.children && n.children.length > 0) {
-                    hasChildrenMap.add(n.address);
-                    n.children.forEach(buildChildrenMap);
-                }
-            };
-            buildChildrenMap(node);
+            // Validate filtered node
+            if (!filteredNode) {
+                throw new Error('Failed to process funding data structure');
+            }
 
             // Hierarchy
             const root = d3.hierarchy(filteredNode);
 
             // Layout
-            // If mobile, more compact vertical spacing
             const nodeHeight = isMobile ? 60 : 40;
             const layoutHeight = Math.max(height - margin.top - margin.bottom, root.descendants().length * nodeHeight);
 
@@ -461,16 +461,16 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
 
             // Initial alignment
             const initialTranslateX = isMobile ? margin.left + 20 : margin.left;
-            const initialTranslateY = height / 2;
-            const initialScale = isMobile ? 0.6 : 1; // Start zoomed out on mobile
+            const initialScale = isMobile ? 0.6 : 1;
 
-            // Only update transform if this is a fresh render or resize
-            // Using a simple check to avoid resetting zoom on every collapse tick if possible
-            // But for now, simple centering is safest
-            svg.call(zoom.transform, d3.zoomIdentity.translate(initialTranslateX, margin.top).scale(initialScale));
+            // Only update transform if needed - check current transform
+            if (!zoomLevel || zoomLevel === 1) {
+                svg.call(zoom.transform, d3.zoomIdentity.translate(initialTranslateX, margin.top).scale(initialScale));
+            }
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('FundingTree D3 Error:', err);
+            setError(err.message || 'Error visualizing funding tree');
         }
     }, [node, isFullscreen, showMobileGraph, isMobile, collapsedNodes, direction, highlightedAddress, showLabels]);
 
@@ -491,6 +491,29 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
 
     // 2. Graph View (Desktop OR Mobile Fullscreen)
     const containerClasses = `tree-wrapper ${isFullscreen || (isMobile && showMobileGraph) ? 'fullscreen-mode' : ''}`;
+
+    if (error) {
+        return (
+            <div style={{
+                padding: 40,
+                textAlign: 'center',
+                color: 'var(--color-danger-text)',
+                background: 'var(--color-bg-secondary)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--color-surface-border)'
+            }}>
+                <h3>Visualization Error</h3>
+                <p style={{ margin: '10px 0' }}>{error}</p>
+                <button
+                    onClick={() => setError(null)}
+                    className="btn btn-primary"
+                    style={{ marginTop: 10 }}
+                >
+                    Retry Visualization
+                </button>
+            </div>
+        );
+    }
 
     // Inline styles for fixed positioning when fullscreen
     const wrapperStyle: React.CSSProperties = (isFullscreen || (isMobile && showMobileGraph)) ? {
