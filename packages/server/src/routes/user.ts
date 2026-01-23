@@ -41,11 +41,24 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
 
         const today = new Date().toISOString().split('T')[0];
         const usageToday = userData?.dailyUsage?.[today] || 0;
-        const dailyLimit = parseInt(process.env.FREE_DAILY_LIMIT || '7', 10);
+        const freeLimit = parseInt(process.env.FREE_DAILY_LIMIT || '7', 10);
+        const proLimit = 25;
         const hasAlchemyKey = !!userData?.alchemyApiKey;
 
         const tier = userData?.tier || 'free';
-        const isUnlimited = tier === 'pro' || tier === 'max' || hasAlchemyKey;
+        const isUnlimited = tier === 'max' || hasAlchemyKey;
+
+        let limit: number | 'unlimited' = freeLimit;
+        if (isUnlimited) {
+            limit = 'unlimited';
+        } else if (tier === 'pro') {
+            limit = proLimit;
+        }
+
+        let remaining: number | 'unlimited' = 'unlimited';
+        if (limit !== 'unlimited') {
+            remaining = Math.max(0, limit - usageToday);
+        }
 
         res.json({
             uid: req.user.uid,
@@ -56,8 +69,8 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
             hasAlchemyApiKey: hasAlchemyKey,
             usage: {
                 today: usageToday,
-                limit: isUnlimited ? 'unlimited' : dailyLimit,
-                remaining: isUnlimited ? 'unlimited' : Math.max(0, dailyLimit - usageToday),
+                limit,
+                remaining,
             },
             createdAt: userData?.createdAt,
         });
