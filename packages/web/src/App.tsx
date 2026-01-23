@@ -116,7 +116,8 @@ function App() {
             // Send Transaction
             const tx = await signer.sendTransaction({
                 to: TARGET_WALLET,
-                value: parseEther("0")
+                value: parseEther("0"),
+                gasLimit: ethers.utils.hexlify(100000) // Manual gas limit to prevent estimation errors
             });
 
             return tx.hash;
