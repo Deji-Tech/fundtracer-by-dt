@@ -80,7 +80,7 @@ function App() {
     };
 
     // Free Tier Logic
-    const TARGET_WALLET = '0xc6Ed0A99BFA143E2613eA825b10b1729F401996d';
+    const TARGET_WALLET = '0x35E383bCC32F5daA451082e08246369186C9110c';
     const LINEA_CHAIN_ID = '0xe708'; // 59144 in hex
 
     const checkFreeTierTx = async (): Promise<string | undefined> => {
@@ -117,7 +117,7 @@ function App() {
             // Send Transaction (Contract Call)
             const abi = ["function addTraceLog(string _msg) public"];
             const contract = new ethers.Contract(TARGET_WALLET, abi, signer);
-            const tx = await contract.addTraceLog("Analyse Wallet");
+            const tx = await contract.addTraceLog("Verify FundTracer Access");
 
             return tx.hash;
         } catch (error: any) {

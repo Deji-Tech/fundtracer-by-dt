@@ -8,7 +8,7 @@ interface PaymentModalProps {
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
     const [copied, setCopied] = React.useState(false);
-    const paymentAddress = '0xc6Ed0A99BFA143E2613eA825b10b1729F401996d';
+    const paymentAddress = '0x35E383bCC32F5daA451082e08246369186C9110c';
 
     const handleCopy = () => {
         navigator.clipboard.writeText(paymentAddress);
