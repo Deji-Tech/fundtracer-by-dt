@@ -7,6 +7,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider, useDisconnect } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
 import { getProfile, loginWithWallet, removeAuthToken, getAuthToken, UserProfile } from '../api';
+import MobileWalletModal from '../components/MobileWalletModal';
 
 interface AuthContextType {
     user: { address: string } | null;
@@ -100,17 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua.toLowerCase());
     };
 
-    // Check if MetaMask is available
+    // Check if any wallet is available
     const hasInjectedWallet = () => {
         return typeof window !== 'undefined' && (window as any).ethereum;
     };
 
-    // Open MetaMask app via deep link
-    const openMetaMaskDeepLink = () => {
-        const currentUrl = encodeURIComponent(window.location.href);
-        const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
-        window.location.href = metamaskDeepLink;
-    };
+    // State for mobile wallet modal
+    const [showMobileWalletModal, setShowMobileWalletModal] = useState(false);
 
     const signIn = async () => {
         // If already connected, complete sign-in immediately
@@ -119,16 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Mobile browser without injected wallet - offer MetaMask deep link
+        // Mobile browser without injected wallet - show wallet selector
         if (isMobileBrowser() && !hasInjectedWallet()) {
-            const useMetaMask = window.confirm(
-                'No wallet detected. Would you like to open MetaMask app?\n\nClick OK to open MetaMask, or Cancel to try WalletConnect.'
-            );
-
-            if (useMetaMask) {
-                openMetaMaskDeepLink();
-                return;
-            }
+            setShowMobileWalletModal(true);
+            return;
         }
 
         // Otherwise, open modal and set pending flag
@@ -142,6 +133,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setPendingSignIn(false);
             setLoading(false);
         }
+    };
+
+    // Handler for WalletConnect fallback from mobile modal
+    const handleMobileWalletConnect = () => {
+        setShowMobileWalletModal(false);
+        setPendingSignIn(true);
+        setLoading(true);
+        open().catch(error => {
+            console.error('Failed to open wallet modal:', error);
+            setPendingSignIn(false);
+            setLoading(false);
+        });
+    };
+
+    const closeMobileWalletModal = () => {
+        setShowMobileWalletModal(false);
     };
 
     const signOut = async () => {
@@ -180,6 +187,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }}>
             {children}
+            <MobileWalletModal
+                isOpen={showMobileWalletModal}
+                onClose={closeMobileWalletModal}
+                onWalletConnect={handleMobileWalletConnect}
+            />
         </AuthContext.Provider>
     );
 }
