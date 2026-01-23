@@ -127,6 +127,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
 
         try {
+            // Force disconnect to prevent stale session "Connection declined" errors
+            if (!isConnected) {
+                try { await disconnect(); } catch (e) { /* ignore */ }
+            }
             await open();
         } catch (error) {
             console.error('Failed to open wallet modal:', error);
