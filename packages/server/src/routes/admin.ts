@@ -118,4 +118,53 @@ router.get('/users', requireAdmin, async (req: AuthenticatedRequest, res: Respon
     }
 });
 
+// Get Recent Activity (Admin Actions + Payments)
+router.get('/activity', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const db = getFirestore();
+
+        // Fetch admin actions
+        const actionsSnap = await db.collection('admin_actions')
+            .orderBy('timestamp', 'desc')
+            .limit(20)
+            .get();
+
+        const adminActions = actionsSnap.docs.map(doc => ({
+            id: doc.id,
+            type: doc.data().action,
+            userId: doc.data().userId,
+            userEmail: doc.data().userEmail,
+            details: doc.data(),
+            timestamp: doc.data().timestamp,
+        }));
+
+        // Fetch recent payments
+        const paymentsSnap = await db.collection('analytics')
+            .doc('revenue')
+            .collection('payments')
+            .orderBy('timestamp', 'desc')
+            .limit(10)
+            .get();
+
+        const payments = paymentsSnap.docs.map(doc => ({
+            id: doc.id,
+            type: 'payment',
+            userId: doc.data().userId,
+            userEmail: doc.data().userEmail,
+            details: doc.data(),
+            timestamp: doc.data().timestamp,
+        }));
+
+        // Combine and sort
+        const combined = [...adminActions, ...payments]
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+            .slice(0, 20);
+
+        res.json({ activities: combined });
+    } catch (error) {
+        console.error('Admin Activity Error:', error);
+        res.status(500).json({ error: 'Failed to fetch activity' });
+    }
+});
+
 export { router as adminRoutes };
