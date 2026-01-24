@@ -122,15 +122,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Otherwise, open modal and set pending flag
+        // Force disconnect any stale sessions before connecting
+        try {
+            await disconnect();
+            // Small delay to ensure cleanup
+            await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (e) {
+            // Ignore disconnect errors - often no session exists
+            console.log('[Auth] Pre-disconnect cleanup:', e);
+        }
+
+        // Now open modal and set pending flag
         setPendingSignIn(true);
         setLoading(true);
 
         try {
-            // Force disconnect to prevent stale session "Connection declined" errors
-            if (!isConnected) {
-                try { await disconnect(); } catch (e) { /* ignore */ }
-            }
             await open();
         } catch (error) {
             console.error('Failed to open wallet modal:', error);
