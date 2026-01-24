@@ -7,7 +7,6 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider, useDisconnect } from '@web3modal/ethers5/react';
 import { ethers } from 'ethers';
 import { getProfile, loginWithWallet, removeAuthToken, getAuthToken, UserProfile } from '../api';
-import MobileWalletModal from '../components/MobileWalletModal';
 
 interface AuthContextType {
     user: { address: string } | null;
@@ -95,30 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [walletProvider, address]);
 
-    // Detect if running in mobile browser
-    const isMobileBrowser = () => {
-        const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
-        return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua.toLowerCase());
-    };
-
-    // Check if any wallet is available
-    const hasInjectedWallet = () => {
-        return typeof window !== 'undefined' && (window as any).ethereum;
-    };
-
-    // State for mobile wallet modal
-    const [showMobileWalletModal, setShowMobileWalletModal] = useState(false);
-
     const signIn = async () => {
         // If already connected, complete sign-in immediately
         if (isConnected && walletProvider && address) {
             await completeSignIn();
-            return;
-        }
-
-        // Mobile browser without injected wallet - show wallet selector
-        if (isMobileBrowser() && !hasInjectedWallet()) {
-            setShowMobileWalletModal(true);
             return;
         }
 
@@ -132,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('[Auth] Pre-disconnect cleanup:', e);
         }
 
-        // Now open modal and set pending flag
+        // Open Web3Modal (Reown) - it handles mobile/desktop automatically
         setPendingSignIn(true);
         setLoading(true);
 
@@ -143,22 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setPendingSignIn(false);
             setLoading(false);
         }
-    };
-
-    // Handler for WalletConnect fallback from mobile modal
-    const handleMobileWalletConnect = () => {
-        setShowMobileWalletModal(false);
-        setPendingSignIn(true);
-        setLoading(true);
-        open().catch(error => {
-            console.error('Failed to open wallet modal:', error);
-            setPendingSignIn(false);
-            setLoading(false);
-        });
-    };
-
-    const closeMobileWalletModal = () => {
-        setShowMobileWalletModal(false);
     };
 
     const signOut = async () => {
@@ -197,11 +160,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }}>
             {children}
-            <MobileWalletModal
-                isOpen={showMobileWalletModal}
-                onClose={closeMobileWalletModal}
-                onWalletConnect={handleMobileWalletConnect}
-            />
         </AuthContext.Provider>
     );
 }
