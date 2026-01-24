@@ -476,16 +476,47 @@ function FundingTree({ node, direction, chain = 'ethereum', title }: FundingTree
 
     // Render Logic
 
-    // 1. Mobile List View (Default on Mobile)
-    if (isMobile && !showMobileGraph) {
+    // 1. Mobile - Show "Coming Soon" Message
+    if (isMobile) {
         return (
-            <MobileTreeView
-                node={node}
-                direction={direction}
-                title={title}
-                chainConfig={chainConfig}
-                onShowGraph={() => setShowMobileGraph(true)}
-            />
+            <div style={{
+                background: 'var(--color-bg-secondary)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '40px 24px',
+                textAlign: 'center',
+                border: '1px solid var(--color-surface-border)',
+                margin: '20px 0'
+            }}>
+                <div style={{
+                    fontSize: '48px',
+                    marginBottom: '16px'
+                }}>
+                    🖥️
+                </div>
+                <h3 style={{
+                    color: 'var(--color-text-primary)',
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    marginBottom: '12px'
+                }}>
+                    Funding Tree Visualization
+                </h3>
+                <p style={{
+                    color: 'var(--color-text-secondary)',
+                    fontSize: '0.95rem',
+                    marginBottom: '8px',
+                    lineHeight: 1.6
+                }}>
+                    Available on Desktop Soon
+                </p>
+                <p style={{
+                    color: 'var(--color-text-muted)',
+                    fontSize: '0.85rem',
+                    lineHeight: 1.5
+                }}>
+                    Please use a PC to view the interactive funding tree visualization
+                </p>
+            </div>
         );
     }
 
