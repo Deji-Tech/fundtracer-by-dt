@@ -10,10 +10,11 @@
     },
     "dependencies": {
         "@fundtracer/core": "*",
+        "@reown/appkit": "^1.8.17",
+        "@reown/appkit-adapter-ethers5": "^1.8.17",
         "@vitejs/plugin-react": "^4.2.1",
-        "@web3modal/ethers5": "^5.1.11",
         "d3": "^7.8.5",
-        "ethers": "^5.8.0",
+        "ethers": "^5.7.2",
         "ethers5": "npm:ethers@^5.8.0",
         "firebase": "^10.7.1",
         "lucide-react": "^0.294.0",
