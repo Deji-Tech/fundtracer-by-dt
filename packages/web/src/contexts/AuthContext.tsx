@@ -1,10 +1,10 @@
 
 // ============================================================
-// Auth Context - Provides auth state with Web3Modal support
+// Auth Context - Provides auth state with Reown AppKit support
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider, useDisconnect } from '@web3modal/ethers5/react';
+import { useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from '@reown/appkit/react';
 import { ethers } from 'ethers';
 import { getProfile, loginWithWallet, removeAuthToken, getAuthToken, UserProfile } from '../api';
 
@@ -15,7 +15,7 @@ interface AuthContextType {
     signIn: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
-    getSigner: () => Promise<ethers.providers.JsonRpcSigner>;
+    getSigner: () => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,10 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [pendingSignIn, setPendingSignIn] = useState(false);
 
-    // Web3Modal hooks
-    const { open } = useWeb3Modal();
-    const { address, isConnected } = useWeb3ModalAccount();
-    const { walletProvider } = useWeb3ModalProvider();
+    // Reown AppKit hooks
+    const { open } = useAppKit();
+    const { address, isConnected } = useAppKitAccount();
+    const { walletProvider } = useAppKitProvider('eip155');
     const { disconnect } = useDisconnect();
 
     // Check for existing auth on mount
@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(true);
             setPendingSignIn(false);
 
-            const provider = new ethers.providers.Web3Provider(walletProvider);
-            const signer = provider.getSigner();
+            const provider = new ethers.providers.Web3Provider(walletProvider as any);
+            const signer = await provider.getSigner();
             const walletAddress = await signer.getAddress();
 
             const message = `Login to FundTracer\nTimestamp: ${Date.now()}`;
@@ -104,23 +104,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Helper to clear all WalletConnect sessions and cache
     const clearAllSessions = async () => {
         try {
-            // 1. Disconnect current session
             await disconnect();
 
-            // 2. Clear WalletConnect storage
+            // Clear WalletConnect storage
             if (typeof window !== 'undefined') {
-                // Clear WalletConnect v2 storage
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith('wc@2:') ||
                         key.startsWith('W3M_') ||
                         key.startsWith('@w3m/') ||
+                        key.startsWith('@appkit/') ||
                         key.includes('walletconnect')) {
                         localStorage.removeItem(key);
                     }
                 });
             }
 
-            // 3. Small delay to ensure cleanup
             await new Promise(resolve => setTimeout(resolve, 500));
         } catch (e) {
             console.log('[Auth] Session cleanup:', e);
@@ -153,11 +151,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // For all other cases (desktop, mobile browsers), use Web3Modal
-        // First, aggressively clear any stale sessions
+        // For all other cases, use AppKit modal
+        // First, clear any stale sessions
         await clearAllSessions();
 
-        // Open Web3Modal (Reown) - it handles mobile/desktop automatically
+        // Open AppKit modal
         setPendingSignIn(true);
         setLoading(true);
 
@@ -179,12 +177,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await disconnect();
 
-            // Clear WalletConnect storage
             if (typeof window !== 'undefined') {
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith('wc@2:') ||
                         key.startsWith('W3M_') ||
                         key.startsWith('@w3m/') ||
+                        key.startsWith('@appkit/') ||
                         key.includes('walletconnect')) {
                         localStorage.removeItem(key);
                     }
@@ -215,8 +213,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             refreshProfile,
             getSigner: async () => {
                 if (!walletProvider) throw new Error('Wallet not connected');
-                const provider = new ethers.providers.Web3Provider(walletProvider);
-                return provider.getSigner();
+                const provider = new ethers.providers.Web3Provider(walletProvider as any);
+                return await provider.getSigner();
             }
         }}>
             {children}
