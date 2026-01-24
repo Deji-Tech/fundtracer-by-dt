@@ -94,6 +94,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [walletProvider, address]);
 
+    // Helper to detect MetaMask in-app browser
+    const isMetaMaskInApp = () => {
+        if (typeof window === 'undefined') return false;
+        const ethereum = (window as any).ethereum;
+        return ethereum?.isMetaMask && /Mobile/.test(navigator.userAgent);
+    };
+
+    // Helper to clear all WalletConnect sessions and cache
+    const clearAllSessions = async () => {
+        try {
+            // 1. Disconnect current session
+            await disconnect();
+
+            // 2. Clear WalletConnect storage
+            if (typeof window !== 'undefined') {
+                // Clear WalletConnect v2 storage
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('wc@2:') ||
+                        key.startsWith('W3M_') ||
+                        key.startsWith('@w3m/') ||
+                        key.includes('walletconnect')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+
+            // 3. Small delay to ensure cleanup
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (e) {
+            console.log('[Auth] Session cleanup:', e);
+        }
+    };
+
     const signIn = async () => {
         // If already connected, complete sign-in immediately
         if (isConnected && walletProvider && address) {
@@ -101,15 +134,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Force disconnect any stale sessions before connecting
-        try {
-            await disconnect();
-            // Small delay to ensure cleanup
-            await new Promise(resolve => setTimeout(resolve, 300));
-        } catch (e) {
-            // Ignore disconnect errors - often no session exists
-            console.log('[Auth] Pre-disconnect cleanup:', e);
+        // Handle MetaMask in-app browser separately for better UX
+        if (isMetaMaskInApp()) {
+            try {
+                setPendingSignIn(true);
+                setLoading(true);
+
+                const ethereum = (window as any).ethereum;
+                await ethereum.request({ method: 'eth_requestAccounts' });
+
+                // The useEffect will handle the rest when isConnected becomes true
+            } catch (error: any) {
+                console.error('MetaMask in-app connection failed:', error);
+                alert(`Connection failed: ${error.message}`);
+                setPendingSignIn(false);
+                setLoading(false);
+            }
+            return;
         }
+
+        // For all other cases (desktop, mobile browsers), use Web3Modal
+        // First, aggressively clear any stale sessions
+        await clearAllSessions();
 
         // Open Web3Modal (Reown) - it handles mobile/desktop automatically
         setPendingSignIn(true);
@@ -128,10 +174,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         removeAuthToken();
         setUser(null);
         setProfile(null);
+
+        // Clear all WalletConnect sessions and cache
         try {
             await disconnect();
+
+            // Clear WalletConnect storage
+            if (typeof window !== 'undefined') {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('wc@2:') ||
+                        key.startsWith('W3M_') ||
+                        key.startsWith('@w3m/') ||
+                        key.includes('walletconnect')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
         } catch (e) {
-            // Ignore disconnect errors
+            console.log('[Auth] Disconnect error:', e);
         }
     };
 
