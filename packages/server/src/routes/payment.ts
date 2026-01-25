@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ethers } from 'ethers';
-import { authMiddleware } from '../middleware/auth';
-import { getUserByAddress, updateUserTier } from '../firebase';
+import { authMiddleware } from '../middleware/auth.js';
+import { getUserByAddress, updateUserTier } from '../firebase.js';
 
 const router = Router();
 
