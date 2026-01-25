@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ethers } from 'ethers';
-import { authenticateToken } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth';
 import { getUserByAddress, updateUserTier } from '../firebase';
 
 const router = Router();
@@ -11,8 +11,8 @@ const PAYMENT_WALLET = '0xFF1A1D11CB6bad91C6d9250082D1DF44d84e4b87';
 
 // Tier prices in USDT (with 6 decimals)
 const TIER_PRICES = {
-    pro: ethers.utils.parseUnits('5', 6), // 5 USDT
-    max: ethers.utils.parseUnits('10', 6) // 10 USDT
+    pro: ethers.parseUnits('5', 6), // 5 USDT
+    max: ethers.parseUnits('10', 6) // 10 USDT
 };
 
 // USDT ABI (minimal - just Transfer event)
@@ -24,7 +24,7 @@ const USDT_ABI = [
  * Verify payment endpoint
  * Checks if user sent the correct amount of USDT to payment wallet
  */
-router.post('/verify-payment', authenticateToken, async (req, res) => {
+router.post('/verify-payment', authMiddleware, async (req, res) => {
     try {
         const { userAddress, tier, paymentAddress } = req.body;
 
@@ -51,7 +51,7 @@ router.post('/verify-payment', authenticateToken, async (req, res) => {
         }
 
         // Connect to Linea RPC
-        const provider = new ethers.providers.JsonRpcProvider(
+        const provider = new ethers.JsonRpcProvider(
             process.env.LINEA_RPC_URL || 'https://rpc.linea.build'
         );
 
@@ -71,8 +71,12 @@ router.post('/verify-payment', authenticateToken, async (req, res) => {
         // Check if any transfer matches the tier price
         const requiredAmount = TIER_PRICES[tier as 'pro' | 'max'];
         const validPayment = events.find(event => {
-            const amount = event.args?.value;
-            return amount && amount.gte(requiredAmount);
+            // Type guard for EventLog
+            if ('args' in event) {
+                const amount = event.args?.value;
+                return amount && amount >= requiredAmount;
+            }
+            return false;
         });
 
         if (validPayment) {
