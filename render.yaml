@@ -5,8 +5,8 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd packages/server && npm install && npm run build
-    startCommand: cd packages/server && npm start
+    buildCommand: npm install && cd packages/server && npm install && npm run build
+    startCommand: node packages/server/dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
