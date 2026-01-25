@@ -73,6 +73,8 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
                 remaining,
             },
             createdAt: userData?.createdAt,
+            profilePicture: userData?.profilePicture,
+            walletAddress: req.user.uid // return address for fallback display
         });
 
         //Track login (async, don't await)
@@ -90,7 +92,7 @@ router.post('/profile', async (req: AuthenticatedRequest, res: Response) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { displayName, email } = req.body;
+    const { displayName, email, profilePicture } = req.body;
 
     // Validate inputs
     if (displayName && displayName.length > 50) {
@@ -104,6 +106,7 @@ router.post('/profile', async (req: AuthenticatedRequest, res: Response) => {
         const updates: any = {};
         if (displayName) updates.displayName = displayName;
         if (email) updates.email = email;
+        if (profilePicture !== undefined) updates.profilePicture = profilePicture;
 
         // Only update if there are changes
         if (Object.keys(updates).length > 0) {
