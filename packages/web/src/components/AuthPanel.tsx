@@ -122,15 +122,25 @@ function AuthPanel({ showApiKeyForm, setShowApiKeyForm }: AuthPanelProps) {
                         width: 32,
                         height: 32,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+                        background: profile?.profilePicture ? 'transparent' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: 'white',
                         fontWeight: 'bold',
-                        fontSize: '10px'
+                        fontSize: '10px',
+                        overflow: 'hidden',
+                        border: '1px solid var(--color-border)'
                     }}>
-                        {user.address.substring(0, 2)}
+                        {profile?.profilePicture ? (
+                            <img
+                                src={profile.profilePicture}
+                                alt="Profile"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                        ) : (
+                            user.address.substring(0, 2)
+                        )}
                     </div>
                     <div>
                         <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
