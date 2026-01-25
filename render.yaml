@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     buildCommand: npm install && npm run build --workspace=@fundtracer/core && npm run build --workspace=@fundtracer/server
-    startCommand: node packages/server/dist/index.js
+    startCommand: node packages/server/dist/packages/server/src/index.js
     envVars:
       - key: NODE_ENV
         value: production
