@@ -35,6 +35,7 @@ import { analyzeRoutes } from './routes/analyze.js';
 import { userRoutes } from './routes/user.js';
 import { duneRoutes } from './routes/dune.js';
 import contractRoutes from './routes/contracts.js';
+import paymentRoutes from './routes/payment.js';
 import { PaymentListener } from './services/PaymentListener.js';
 import contractService from './services/ContractService.js';
 
@@ -137,6 +138,7 @@ import { authRoutes } from './routes/auth.js';
 apiRouter.use('/user', authMiddleware, userRoutes);
 apiRouter.use('/auth', authRoutes); // Public auth route
 apiRouter.use('/contracts', contractRoutes); // Public contract lookup
+apiRouter.use('/payment', paymentRoutes); // Payment verification
 apiRouter.use('/analyze', authMiddleware, usageMiddleware, analyzeRoutes);
 apiRouter.use('/dune', authMiddleware, duneRoutes);
 import { trackingRoutes } from './routes/tracking.js';
