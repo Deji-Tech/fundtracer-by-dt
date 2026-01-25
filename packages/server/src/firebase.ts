@@ -101,4 +101,37 @@ export function getFirestore(): admin.firestore.Firestore {
     return admin.firestore();
 }
 
+/**
+ * Get user by wallet address
+ */
+export async function getUserByAddress(address: string) {
+    const db = getFirestore();
+    const userDoc = await db.collection('users').doc(address.toLowerCase()).get();
+
+    if (!userDoc.exists) {
+        return null;
+    }
+
+    return {
+        address: userDoc.id,
+        ...userDoc.data()
+    };
+}
+
+/**
+ * Update user tier after payment verification
+ */
+export async function updateUserTier(address: string, tier: string, expiresAt: Date) {
+    const db = getFirestore();
+    const userRef = db.collection('users').doc(address.toLowerCase());
+
+    await userRef.set({
+        tier,
+        tierExpiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`[Payment] Updated user ${address} to ${tier} tier, expires ${expiresAt.toISOString()}`);
+}
+
 export { admin };

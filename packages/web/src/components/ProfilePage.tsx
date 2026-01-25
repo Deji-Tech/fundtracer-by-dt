@@ -11,15 +11,46 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     const { user, profile, refreshProfile } = useAuth();
     const [name, setName] = useState(profile?.name || '');
     const [email, setEmail] = useState(profile?.email || '');
+    const [profilePicture, setProfilePicture] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (profile) {
             setName(profile.name || '');
             setEmail(profile.email || ''); // Don't fallback to address for email
+            setProfilePicture(profile.profilePicture || null);
         }
     }, [profile]);
+
+    const handleProfilePictureClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                setMessage({ type: 'error', text: 'Please select an image file' });
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setMessage({ type: 'error', text: 'Image must be less than 5MB' });
+                return;
+            }
+
+            // Read and preview the image
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfilePicture(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,7 +58,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
         setMessage(null);
 
         try {
-            await updateProfile({ displayName: name, email });
+            await updateProfile({ displayName: name, email, profilePicture: profilePicture || undefined });
             await refreshProfile();
             setMessage({ type: 'success', text: 'Profile updated successfully' });
         } catch (error: any) {
@@ -61,11 +92,18 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
 
             <div className="card" style={{ padding: 'var(--space-8)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'var(--space-8)' }}>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                    />
                     <div style={{
                         width: '100px',
                         height: '100px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
+                        background: profilePicture ? 'transparent' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -73,23 +111,44 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
                         fontWeight: 'bold',
                         color: 'white',
                         marginBottom: 'var(--space-4)',
-                        position: 'relative'
+                        position: 'relative',
+                        overflow: 'hidden',
+                        border: '3px solid var(--color-border)'
                     }}>
-                        {name ? name[0].toUpperCase() : <User size={48} />}
-                        {/* <button
+                        {profilePicture ? (
+                            <img
+                                src={profilePicture}
+                                alt="Profile"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                            />
+                        ) : (
+                            name ? name[0].toUpperCase() : <User size={48} />
+                        )}
+                        <button
+                            type="button"
                             className="btn btn-secondary btn-sm"
+                            onClick={handleProfilePictureClick}
                             style={{
                                 position: 'absolute',
                                 bottom: 0,
                                 right: 0,
                                 borderRadius: '50%',
                                 padding: '8px',
-                                minWidth: 'auto'
+                                minWidth: 'auto',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                             }}
-                            title="Change Avatar (Coming Soon)"
+                            title="Change Profile Picture"
                         >
                             <Camera size={16} />
-                        </button> */}
+                        </button>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                         <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600 }}>{name || 'Anonymous User'}</h2>
