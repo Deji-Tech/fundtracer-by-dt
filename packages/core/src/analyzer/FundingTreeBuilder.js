@@ -3,7 +3,7 @@
 // ============================================================
 import { getAddressInfo } from '../data/KnownAddresses.js';
 const DEFAULT_CONFIG = {
-    maxDepth: 5, // Balanced depth for complete but timely analysis
+    maxDepth: 2, // Reduced depth to minimize API calls
     direction: 'both',
 };
 export class FundingTreeBuilder {
@@ -15,19 +15,19 @@ export class FundingTreeBuilder {
         this.onProgress = onProgress;
     }
     /** Build funding tree for sources (who funded this wallet) */
-    async buildSourceTree(address, config = {}) {
+    async buildSourceTree(address, config = {}, preloadedTxs) {
         this.visitedAddresses.clear();
         const mergedConfig = { ...DEFAULT_CONFIG, ...config };
-        return this.buildTree(address, 0, mergedConfig, 'source');
+        return this.buildTree(address, 0, mergedConfig, 'source', preloadedTxs);
     }
     /** Build funding tree for destinations (who this wallet funded) */
-    async buildDestinationTree(address, config = {}) {
+    async buildDestinationTree(address, config = {}, preloadedTxs) {
         this.visitedAddresses.clear();
         const mergedConfig = { ...DEFAULT_CONFIG, ...config };
-        return this.buildTree(address, 0, mergedConfig, 'destination');
+        return this.buildTree(address, 0, mergedConfig, 'destination', preloadedTxs);
     }
     /** Recursive tree builder */
-    async buildTree(address, depth, config, direction) {
+    async buildTree(address, depth, config, direction, preloadedTxs) {
         const normalizedAddr = address.toLowerCase();
         // Create base node
         const node = {
@@ -52,6 +52,10 @@ export class FundingTreeBuilder {
         if (infraInfo) {
             node.isInfrastructure = true;
             node.label = infraInfo.name;
+            node.entityType = infraInfo.type === 'exchange' ? 'cex' :
+                infraInfo.type === 'bridge' ? 'bridge' :
+                    infraInfo.type === 'mixer' ? 'mixer' :
+                        infraInfo.category === 'dex' ? 'dex' : 'contract';
             // Stop recursion for infrastructure
             return node;
         }
@@ -66,10 +70,17 @@ export class FundingTreeBuilder {
         }
         try {
             // Get transactions
-            const txs = await this.provider.getTransactions(normalizedAddr, {
-                timeRange: config.timeRange,
-                minValue: config.minValueEth,
-            });
+            let txs;
+            // Use preloaded transactions if at root level and available
+            if (depth === 0 && preloadedTxs) {
+                txs = preloadedTxs;
+            }
+            else {
+                txs = await this.provider.getTransactions(normalizedAddr, {
+                    timeRange: config.timeRange,
+                    minValue: config.minValueEth,
+                });
+            }
             // Filter by direction AND only native ETH transfers (not tokens which have different value scales)
             const isEthTransfer = (tx) => tx.category === 'transfer' || tx.category === 'contract_call';
             const relevantTxs = direction === 'source'

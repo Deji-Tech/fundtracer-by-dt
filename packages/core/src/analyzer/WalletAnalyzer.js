@@ -54,11 +54,13 @@ export class WalletAnalyzer {
         }
         // Progress update
         this.reportProgress('Fetching transactions', 2, 6, 'Retrieving transaction history...');
-        // Get all transactions
+        // Get transactions with optional limit
+        const txLimit = options.transactionLimit || undefined; // undefined = fetch all
+        const filterWithLimit = { ...options.filters, limit: txLimit };
         const [normalTxs, internalTxs, tokenTransfers] = await Promise.all([
-            provider.getTransactions(normalizedAddr, options.filters),
-            provider.getInternalTransactions(normalizedAddr, options.filters),
-            provider.getTokenTransfers(normalizedAddr, options.filters),
+            provider.getTransactions(normalizedAddr, filterWithLimit),
+            provider.getInternalTransactions(normalizedAddr, filterWithLimit),
+            provider.getTokenTransfers(normalizedAddr, filterWithLimit),
         ]);
         // Combine and dedupe transactions
         const allTxs = this.mergeTransactions(normalTxs, internalTxs);
@@ -67,8 +69,8 @@ export class WalletAnalyzer {
         // Build funding trees
         const treeBuilder = new FundingTreeBuilder(provider, this.onProgress);
         const [fundingSources, fundingDestinations] = await Promise.all([
-            treeBuilder.buildSourceTree(normalizedAddr, options.treeConfig),
-            treeBuilder.buildDestinationTree(normalizedAddr, options.treeConfig),
+            treeBuilder.buildSourceTree(normalizedAddr, options.treeConfig, allTxs),
+            treeBuilder.buildDestinationTree(normalizedAddr, options.treeConfig, allTxs),
         ]);
         // Progress update
         this.reportProgress('Detecting suspicious activity', 4, 6, 'Analyzing patterns...');
@@ -95,7 +97,7 @@ export class WalletAnalyzer {
         // Progress update
         this.reportProgress('Generating summary', 6, 6, 'Finalizing analysis...');
         // Generate summary
-        const summary = this.generateSummary(allTxs, fundingSources, fundingDestinations);
+        const summary = this.generateSummary(allTxs, fundingSources, fundingDestinations, walletInfo.firstTxTimestamp);
         return {
             wallet: walletInfo,
             transactions: allTxs,
@@ -332,7 +334,7 @@ export class WalletAnalyzer {
             .sort((a, b) => b.interactionCount - a.interactionCount);
     }
     /** Generate analysis summary */
-    generateSummary(transactions, sources, destinations) {
+    generateSummary(transactions, sources, destinations, firstTxTimestamp) {
         const successfulTxs = transactions.filter(tx => tx.status === 'success').length;
         const failedTxs = transactions.filter(tx => tx.status === 'failed').length;
         // Only sum ETH transfers (not token/nft transfers which have different value scales)
@@ -349,10 +351,13 @@ export class WalletAnalyzer {
             if (tx.to)
                 uniqueAddresses.add(tx.to);
         }
-        const timestamps = transactions.map(tx => tx.timestamp).filter(t => t > 0);
-        const activityPeriodDays = timestamps.length > 1
-            ? Math.ceil((Math.max(...timestamps) - Math.min(...timestamps)) / 86400)
+        // Calculate activity period - ALWAYS use wallet firstTxTimestamp for consistency
+        // This ensures the same result regardless of transaction limit/pagination
+        const nowTimestamp = Math.floor(Date.now() / 1000);
+        const activityPeriodDays = (firstTxTimestamp && firstTxTimestamp > 0)
+            ? Math.max(1, Math.ceil((nowTimestamp - firstTxTimestamp) / 86400))
             : 1;
+        console.log(`[ActivityPeriod] Using wallet firstTx: ${firstTxTimestamp}, Now: ${nowTimestamp}, Days: ${activityPeriodDays}`);
         return {
             totalTransactions: transactions.length,
             successfulTxs,
@@ -366,8 +371,8 @@ export class WalletAnalyzer {
             topFundingDestinations: destinations.children
                 .slice(0, 5)
                 .map(c => ({ address: c.address, valueEth: c.totalValueInEth })),
-            activityPeriodDays,
-            averageTxPerDay: transactions.length / activityPeriodDays,
+            activityPeriodDays: Math.max(1, activityPeriodDays),
+            averageTxPerDay: transactions.length / Math.max(1, activityPeriodDays),
         };
     }
     /** Flatten tree addresses */

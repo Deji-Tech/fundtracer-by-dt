@@ -27,7 +27,7 @@ export class ProviderFactory {
         // Try Alchemy first (fastest, most reliable)
         if (this.apiKeys.alchemy) {
             console.log(`[ProviderFactory] Using Alchemy for ${chainId}`);
-            const provider = new AlchemyProvider(chainId, this.apiKeys.alchemy, this.apiKeys.moralis);
+            const provider = new AlchemyProvider(chainId, this.apiKeys.alchemy, this.apiKeys.moralis, this.getExplorerKeyForChain(chainId));
             this.providers.set(chainId, provider);
             return provider;
         }

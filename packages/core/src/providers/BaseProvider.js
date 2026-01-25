@@ -178,6 +178,7 @@ export class BaseProvider {
     }
     /** Get normal transactions for an address */
     async getTransactions(address, filters) {
+        const limit = filters?.limit || 10000; // Use limit if provided, default to 10000
         const rawTxs = await this.request({
             module: 'account',
             action: 'txlist',
@@ -185,7 +186,7 @@ export class BaseProvider {
             startblock: 0,
             endblock: 99999999,
             page: 1,
-            offset: 10000,
+            offset: limit,
             sort: 'desc',
         });
         if (!Array.isArray(rawTxs))
@@ -199,6 +200,7 @@ export class BaseProvider {
     }
     /** Get internal transactions for an address */
     async getInternalTransactions(address, filters) {
+        const limit = filters?.limit || 10000;
         const rawTxs = await this.request({
             module: 'account',
             action: 'txlistinternal',
@@ -206,7 +208,7 @@ export class BaseProvider {
             startblock: 0,
             endblock: 99999999,
             page: 1,
-            offset: 10000,
+            offset: limit,
             sort: 'desc',
         });
         if (!Array.isArray(rawTxs))
@@ -219,6 +221,7 @@ export class BaseProvider {
     }
     /** Get ERC20 token transfers */
     async getTokenTransfers(address, filters) {
+        const limit = filters?.limit || 10000;
         const rawTransfers = await this.request({
             module: 'account',
             action: 'tokentx',
@@ -226,7 +229,7 @@ export class BaseProvider {
             startblock: 0,
             endblock: 99999999,
             page: 1,
-            offset: 10000,
+            offset: limit,
             sort: 'desc',
         });
         if (!Array.isArray(rawTransfers))

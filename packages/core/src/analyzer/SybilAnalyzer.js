@@ -3,6 +3,7 @@
 // Detects sybil clusters by analyzing common funding sources
 // ============================================================
 import { AlchemyProvider } from '../providers/AlchemyProvider.js';
+import { CovalentProvider } from '../providers/CovalentProvider.js';
 /** Known CEX/clean addresses */
 const KNOWN_SOURCES = {
     '0x21a31ee1afc51d94c2efccaa2092ad1028285549': 'Binance 15',
@@ -24,12 +25,16 @@ const THRESHOLDS = {
 };
 export class SybilAnalyzer {
     provider;
+    covalentProvider;
     chain;
     moralisKey;
-    constructor(chain, alchemyKey, moralisKey) {
+    constructor(chain, alchemyKey, moralisKey, covalentKey) {
         this.chain = chain;
         this.provider = new AlchemyProvider(chain, alchemyKey);
         this.moralisKey = moralisKey || '';
+        if (covalentKey) {
+            this.covalentProvider = new CovalentProvider(chain, covalentKey);
+        }
     }
     /**
      * Main analysis entry point
@@ -379,7 +384,23 @@ export class SybilAnalyzer {
             const batch = uncachedAddresses.slice(i, i + batchSize);
             const batchResults = await Promise.all(batch.map(async (address) => {
                 try {
-                    // Try Moralis first (faster)
+                    // Try Covalent first (deep history, most reliable)
+                    if (this.covalentProvider) {
+                        const funding = await this.covalentProvider.getFirstFunder(address);
+                        if (funding && funding.firstTx) {
+                            const result = {
+                                address,
+                                funder: funding.address,
+                                fundingTxHash: funding.firstTx.hash,
+                                fundingTimestamp: funding.firstTx.timestamp,
+                                fundingAmount: funding.firstTx.valueInEth,
+                                interactionCount: 1,
+                            };
+                            this.fundingCache.set(address.toLowerCase(), result);
+                            return result;
+                        }
+                    }
+                    // Try Moralis next (faster than Alchemy)
                     if (this.moralisKey) {
                         const funding = await this.getFirstFunderMoralis(address);
                         if (funding) {

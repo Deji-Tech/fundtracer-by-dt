@@ -68,15 +68,17 @@ export class AlchemyProvider {
     chainConfig;
     apiKey;
     moralisKey;
+    explorerKey;
     rpcUrl;
     client;
     rateLimiter;
     moralisRateLimiter;
     cache;
-    constructor(chain, apiKey, moralisKey) {
+    constructor(chain, apiKey, moralisKey, explorerKey) {
         this.chainConfig = getChainConfig(chain);
         this.apiKey = apiKey;
         this.moralisKey = moralisKey;
+        this.explorerKey = explorerKey;
         this.rpcUrl = `${ALCHEMY_URLS[chain]}${apiKey}`;
         this.rateLimiter = new AlchemyRateLimiter();
         this.moralisRateLimiter = new MoralisRateLimiter();
@@ -97,18 +99,36 @@ export class AlchemyProvider {
         return this.chainConfig.name;
     }
     /** Make an Alchemy JSON-RPC request */
-    async rpcRequest(method, params) {
+    async rpcRequest(method, params, retries = 3) {
         await this.rateLimiter.throttle();
-        const response = await this.client.post('', {
-            jsonrpc: '2.0',
-            id: 1,
-            method,
-            params,
-        });
-        if (response.data.error) {
-            throw new Error(`Alchemy error: ${response.data.error.message}`);
+        try {
+            const response = await this.client.post('', {
+                jsonrpc: '2.0',
+                id: 1,
+                method,
+                params,
+            });
+            if (response.data.error) {
+                // Check specifically for rate limit or unknown error which might be rate limit
+                const errMsg = response.data.error.message || '';
+                if ((response.data.error.code === 429 || errMsg.includes('rate limit') || errMsg.includes('Too Many Requests')) && retries > 0) {
+                    console.warn(`[Alchemy] Rate limited on ${method}. Retrying in ${1000 * (4 - retries)}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
+                    return this.rpcRequest(method, params, retries - 1);
+                }
+                throw new Error(`Alchemy error: ${response.data.error.message}`);
+            }
+            return response.data.result;
         }
-        return response.data.result;
+        catch (error) {
+            // Catch axios 429s
+            if (error.response?.status === 429 && retries > 0) {
+                console.warn(`[Alchemy] 429 on ${method}. Retrying in ${1000 * (4 - retries)}ms...`);
+                await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
+                return this.rpcRequest(method, params, retries - 1);
+            }
+            throw error;
+        }
     }
     /** Get contract code */
     async getCode(address) {
@@ -119,7 +139,7 @@ export class AlchemyProvider {
             return '0x';
         }
     }
-    /** Get wallet info (balance and tx count) */
+    /** Get wallet info (balance, tx count, and first tx) */
     async getWalletInfo(address) {
         const cacheKey = `walletInfo:${address}`;
         const cached = this.cache.get(cacheKey);
@@ -132,16 +152,97 @@ export class AlchemyProvider {
         const balanceWei = BigInt(balanceHex);
         const balanceInEth = Number(balanceWei) / 1e18;
         const txCount = parseInt(txCountHex, 16);
+        // Fetch first transaction to determine true start date
+        let firstTxTimestamp;
+        // Try Lineascan/Explorer API first for Linea (most accurate)
+        if (this.chainId === 'linea') {
+            try {
+                const explorerTs = await this.getFirstTxTimestampExplorer(address);
+                if (explorerTs) {
+                    firstTxTimestamp = explorerTs;
+                    console.log(`[Explorer] Found first tx timestamp: ${firstTxTimestamp}`);
+                }
+            }
+            catch (e) {
+                console.warn(`[Explorer] Failed to fetch first tx for ${address}`, e);
+            }
+        }
+        // Fallback to Alchemy if not found yet
+        if (!firstTxTimestamp) {
+            try {
+                console.log(`[Alchemy] Fetching first tx for ${address}...`);
+                // Check for incoming transfers (funding)
+                const params = {
+                    toAddress: address,
+                    category: ['external'], // Creation is usually an external transfer
+                    withMetadata: true,
+                    maxCount: '0x1',
+                    order: 'asc',
+                    excludeZeroValue: false,
+                };
+                const result = await this.rpcRequest('alchemy_getAssetTransfers', [params]);
+                if (result.transfers && result.transfers.length > 0 && result.transfers[0].metadata?.blockTimestamp) {
+                    firstTxTimestamp = new Date(result.transfers[0].metadata.blockTimestamp).getTime() / 1000;
+                    console.log(`[Alchemy] Found first tx timestamp: ${firstTxTimestamp} (${result.transfers[0].metadata.blockTimestamp})`);
+                }
+                else {
+                    console.log(`[Alchemy] No transfers found or missing timestamp for ${address}`);
+                }
+            }
+            catch (e) {
+                console.warn(`[Alchemy] Failed to fetch first tx timestamp for ${address}`, e);
+            }
+        }
         const walletInfo = {
             address: address.toLowerCase(),
             chain: this.chainConfig.id,
             balance: balanceWei.toString(),
             balanceInEth,
             txCount,
+            firstTxTimestamp,
             isContract: false, // Would need eth_getCode to check
         };
         this.cache.set(cacheKey, walletInfo);
         return walletInfo;
+    }
+    /** Fetch first transaction timestamp using Explorer API (Etherscan V2) */
+    async getFirstTxTimestampExplorer(address) {
+        // Etherscan V2 unified API - uses chainid parameter
+        // https://api.etherscan.io/v2/api?chainid=59144&module=account&action=txlist&address=...
+        const chainIdMap = {
+            'linea': '59144',
+            'ethereum': '1',
+            'polygon': '137',
+            'arbitrum': '42161',
+            'optimism': '10',
+            'base': '8453',
+        };
+        const chainIdNum = chainIdMap[this.chainId];
+        if (!chainIdNum)
+            return null;
+        // Use provided key or try without key (often stricter rate limits)
+        const apiKeyParam = this.explorerKey ? `&apikey=${this.explorerKey}` : '';
+        const url = `https://api.etherscan.io/v2/api?chainid=${chainIdNum}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc${apiKeyParam}`;
+        try {
+            console.log(`[Explorer] Fetching first tx from Etherscan V2 (chain ${chainIdNum})...`);
+            const response = await axios.get(url, { timeout: 10000 });
+            if (response.data.status === '1' && response.data.result.length > 0) {
+                const firstTx = response.data.result[0];
+                const timestamp = parseInt(firstTx.timeStamp);
+                console.log(`[Explorer] Found first tx timestamp: ${timestamp} (${new Date(timestamp * 1000).toISOString()})`);
+                return timestamp;
+            }
+            else if (response.data.message === 'No transactions found') {
+                console.log(`[Explorer] No transactions found for ${address}`);
+                return null;
+            }
+            console.warn(`[Explorer] API error: ${response.data.message}`);
+            return null;
+        }
+        catch (e) {
+            console.error(`[Explorer] Request failed:`, e);
+            throw e;
+        }
     }
     /** Get all transactions using Asset Transfers API */
     async getTransactions(address, filters) {
@@ -172,7 +273,7 @@ export class AlchemyProvider {
         return transactions;
     }
     /** Get asset transfers from Alchemy */
-    async getAssetTransfers(address, direction) {
+    async getAssetTransfers(address, direction, order = 'desc') {
         const allTransfers = [];
         let pageKey;
         // 'internal' category only supported on ETH and MATIC
@@ -186,7 +287,8 @@ export class AlchemyProvider {
                 category: categories,
                 withMetadata: true,
                 maxCount: '0x3e8', // 1000 per page
-                order: 'desc',
+                order: order,
+                excludeZeroValue: false,
             };
             if (pageKey) {
                 params.pageKey = pageKey;
@@ -214,15 +316,22 @@ export class AlchemyProvider {
         if (transfer.category === 'external') {
             category = 'transfer';
         }
-        else if (transfer.category === 'internal') {
-            category = 'contract_call';
-        }
         else if (transfer.category === 'erc20') {
             category = 'token_transfer';
         }
         else if (transfer.category === 'erc721' || transfer.category === 'erc1155') {
             category = 'nft_transfer';
         }
+        else if (transfer.category === 'internal') {
+            // Internal transfers are often contract calls, especially if 0 value
+            category = 'contract_call';
+        }
+        // Check for contract interaction (external tx with data/input usually, but here we approximate)
+        // Note: Alchemy Asset Transfers doesn't always show input data for external transfers easily without full tx details.
+        // However, 0-value external transfers to contracts are often calls.
+        // For accurate contract_call detection from 'external', we would need to check if 'to' is a contract
+        // or check input data. For now, rely on internal = contract_call (usually value transfer in call)
+        // or simplistic logic.
         return {
             hash: transfer.hash,
             blockNumber,
