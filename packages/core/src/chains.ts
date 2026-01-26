@@ -12,7 +12,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://etherscan.io',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: false, // Coming soon
+        enabled: true,
     },
     linea: {
         id: 'linea',
@@ -30,7 +30,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://arbiscan.io',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: false, // Coming soon
+        enabled: true,
     },
     base: {
         id: 'base',
@@ -39,7 +39,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://basescan.org',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: false, // Coming soon
+        enabled: true,
     },
     optimism: {
         id: 'optimism',
@@ -48,7 +48,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'ETH',
         explorer: 'https://optimistic.etherscan.io',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: false, // Coming soon
+        enabled: true,
     },
     polygon: {
         id: 'polygon',
@@ -57,7 +57,7 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
         symbol: 'MATIC',
         explorer: 'https://polygonscan.com',
         apiUrl: 'https://api.etherscan.io/v2/api',
-        enabled: false, // Coming soon
+        enabled: true,
     },
 };
 

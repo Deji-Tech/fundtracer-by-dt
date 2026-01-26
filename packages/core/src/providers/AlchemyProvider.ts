@@ -393,9 +393,10 @@ export class AlchemyProvider {
         const timestamp = transfer.metadata?.blockTimestamp
             ? new Date(transfer.metadata.blockTimestamp).getTime() / 1000
             : 0;
-        const valueInEth = transfer.value || 0;
-        // Convert ETH value to Wei string for consistency
-        const value = (valueInEth * 1e18).toLocaleString('fullwide', { useGrouping: false }).split('.')[0];
+        // Value from Alchemy Asset Transfers is numeric (float)
+        // For external/internal checks, it represents ETH.
+        // For ERC20/ERC721, it represents token amount.
+        const rawValue = transfer.value || 0;
 
         let category: TxCategory = 'unknown';
         if (transfer.category === 'external') {
@@ -405,16 +406,13 @@ export class AlchemyProvider {
         } else if (transfer.category === 'erc721' || transfer.category === 'erc1155') {
             category = 'nft_transfer';
         } else if (transfer.category === 'internal') {
-            // Internal transfers are often contract calls, especially if 0 value
             category = 'contract_call';
         }
-        // Check for contract interaction (external tx with data/input usually, but here we approximate)
-        // Note: Alchemy Asset Transfers doesn't always show input data for external transfers easily without full tx details.
-        // However, 0-value external transfers to contracts are often calls.
 
-        // For accurate contract_call detection from 'external', we would need to check if 'to' is a contract
-        // or check input data. For now, rely on internal = contract_call (usually value transfer in call)
-        // or simplistic logic.
+        // Only assign valueInEth if it is an ETH transfer
+        const isEthTransfer = category === 'transfer' || category === 'contract_call';
+        const valueInEth = isEthTransfer ? rawValue : 0;
+        const value = isEthTransfer ? (valueInEth * 1e18).toLocaleString('fullwide', { useGrouping: false }).split('.')[0] : '0';
 
         return {
             hash: transfer.hash,
@@ -422,15 +420,15 @@ export class AlchemyProvider {
             timestamp,
             from: transfer.from.toLowerCase(),
             to: transfer.to?.toLowerCase() || null,
-            value: transfer.rawContract.value || '0',
+            value: transfer.rawContract.value || value,
             valueInEth,
-            gasUsed: '0', // Not available in asset transfers
+            gasUsed: '0',
             gasPrice: '0',
             gasCostInEth: 0,
             status: 'success' as TxStatus,
             category,
             isIncoming,
-            tokenTransfers: transfer.category !== 'external' ? [{
+            tokenTransfers: transfer.category !== 'external' && transfer.category !== 'internal' ? [{
                 tokenAddress: transfer.rawContract.address || '',
                 tokenName: transfer.asset || 'Unknown',
                 tokenSymbol: transfer.asset || '???',
@@ -438,7 +436,7 @@ export class AlchemyProvider {
                 from: transfer.from.toLowerCase(),
                 to: transfer.to?.toLowerCase() || '',
                 value: transfer.rawContract.value || '0',
-                valueFormatted: valueInEth,
+                valueFormatted: rawValue,
             }] : undefined,
         };
     }

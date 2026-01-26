@@ -26,6 +26,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
             priceValue: 5,
             features: [
                 '30 days access',
+                'Access to Linea, Arb, Base',
                 'No gas fees',
                 '25 daily analyses',
                 '2s action delay',
@@ -40,6 +41,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose }) => {
             badge: 'BEST VALUE',
             features: [
                 '30 days access',
+                'Access to All Chains',
                 'Unlimited analyses',
                 'Sybil detection',
                 'API access',

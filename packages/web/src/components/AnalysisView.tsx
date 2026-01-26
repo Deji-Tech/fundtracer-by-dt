@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnalysisResult, SuspiciousIndicator } from '@fundtracer/core';
 import FundingTree from './FundingTree';
 import TransactionList from './TransactionList';
+import AddressLabel from './AddressLabel';
 
 interface AnalysisViewProps {
     result: AnalysisResult;
@@ -28,15 +29,19 @@ function AnalysisView({ result, pagination, loadingMore, onLoadMore }: AnalysisV
             <div className="card" style={{ marginBottom: 'var(--space-4)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
                     <div>
-                        <h2 style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 'var(--text-sm)',
-                            marginBottom: 'var(--space-2)',
-                            wordBreak: 'break-all',
-                            color: 'var(--color-text-primary)'
-                        }}>
-                            {result.wallet.address}
-                        </h2>
+                        <div style={{ marginBottom: 'var(--space-2)' }}>
+                            <AddressLabel
+                                address={result.wallet.address}
+                                editable={true}
+                                showAddress={true}
+                                style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: 'var(--text-lg)',
+                                    fontWeight: 'bold',
+                                    color: 'var(--color-text-primary)'
+                                }}
+                            />
+                        </div>
                         <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
                             <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', textTransform: 'uppercase' }}>
                                 {result.wallet.chain}
@@ -61,6 +66,22 @@ function AnalysisView({ result, pagination, loadingMore, onLoadMore }: AnalysisV
                             </span>
                         </div>
                     </div>
+                </div>
+
+                {/* Actions Bar */}
+                <div style={{ padding: '0 var(--space-4) var(--space-4)', display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-4)' }}>
+                    <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => import('../utils/exportReport').then(mod => mod.generatePDFReport(result))}
+                        title="Download PDF Report"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8 }}>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export Report
+                    </button>
                 </div>
             </div>
 

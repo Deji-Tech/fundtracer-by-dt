@@ -25,6 +25,8 @@ import ContractSearch from './components/ContractSearch';
 
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import ProfilePage from './components/ProfilePage';
+import SearchHistory from './components/SearchHistory';
+import { addToHistory } from './utils/history';
 
 type ViewMode = 'wallet' | 'contract' | 'compare' | 'sybil' | 'profile';
 
@@ -169,6 +171,9 @@ function App() {
         }
     };
 
+    // Session Cache
+    const [resultsCache, setResultsCache] = useState<Record<string, any>>({});
+
     const _executeAnalyzeWallet = async () => {
         const address = walletAddresses[0]?.trim();
         if (!address) return;
@@ -178,6 +183,19 @@ function App() {
         setPagination(null);
         setCurrentAnalysisAddress(address);
 
+        // Check cache first
+        const cacheKey = `${address.toLowerCase()}-${selectedChain}`;
+        if (resultsCache[cacheKey]) {
+            console.log('Using session cache for:', cacheKey);
+            setWalletResult(resultsCache[cacheKey]);
+            if (resultsCache[cacheKey].pagination) {
+                setPagination(resultsCache[cacheKey].pagination!);
+            }
+            addToHistory(address, selectedChain);
+            setLoading(false);
+            return;
+        }
+
         try {
             // Free Tier Check
             let txHash;
@@ -186,14 +204,23 @@ function App() {
                 txHash = await checkFreeTierTx();
             }
 
+            // Save to history
+            addToHistory(address, selectedChain);
+
             const response = await analyzeWallet(address, selectedChain, { txHash, limit: 100, offset: 0 });
             if (response.result) {
                 setWalletResult(response.result);
+                // Update cache
+                setResultsCache(prev => ({ ...prev, [cacheKey]: response.result }));
+
                 if (response.result.pagination) {
                     setPagination(response.result.pagination);
                 }
             }
         } catch (err: any) {
+            if (err.message && (err.message.includes('Daily limit exceeded') || err.message.includes('Upgrade to increase') || err.message.includes('Chain restricted'))) {
+                setShowPayment(true);
+            }
             setError(err.message);
         } finally {
             setLoading(false);
@@ -443,6 +470,7 @@ function App() {
                                             <ChainSelector
                                                 selectedChain={selectedChain}
                                                 onSelect={handleChainSelect}
+                                                onUpgrade={() => setShowPayment(true)}
                                             />
                                         </div>
 
@@ -523,6 +551,20 @@ function App() {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Recent History (Only when no result) */}
+                                    {viewMode === 'wallet' && !walletResult && !loading && (
+                                        <div className="animate-fade-in">
+                                            <SearchHistory
+                                                onSelect={(addr, chain) => {
+                                                    setWalletAddresses([addr]);
+                                                    if (chain) setSelectedChain(chain as ChainId);
+                                                    // Optional: auto-analyze. Let's just fill for now.
+                                                    // To auto-analyze, we'd need to trigger it in useEffect due to state batching
+                                                }}
+                                            />
+                                        </div>
+                                    )}
 
                                     {/* Results */}
                                     {viewMode === 'wallet' && walletResult && (
