@@ -61,23 +61,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
     };
 
-    const completeSignIn = useCallback(async () => {
-        if (!walletProvider || !address) return;
-
+    const performLogin = useCallback(async (providerInput?: any, addressInput?: string) => {
         try {
             setLoading(true);
             setPendingSignIn(false);
 
-            const provider = new ethers.providers.Web3Provider(walletProvider as any);
+            let provider;
+            let walletAddress = addressInput;
+
+            if (providerInput) {
+                provider = new ethers.providers.Web3Provider(providerInput);
+            } else if (walletProvider) {
+                provider = new ethers.providers.Web3Provider(walletProvider as any);
+            } else {
+                throw new Error('No provider available');
+            }
+
             const signer = await provider.getSigner();
-            const walletAddress = await signer.getAddress();
+            if (!walletAddress) {
+                walletAddress = await signer.getAddress();
+            }
 
             const message = `Login to FundTracer\nTimestamp: ${Date.now()}`;
             const signature = await signer.signMessage(message);
 
-            const loginResponse = await loginWithWallet(walletAddress, signature, message);
+            const loginResponse = await loginWithWallet(walletAddress!, signature, message);
 
-            setUser({ address: walletAddress });
+            setUser({ address: walletAddress! });
 
             const userProfile = await getProfile();
             setProfile({
@@ -88,41 +98,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         } catch (error: any) {
             console.error('Wallet Sign-in failed:', error);
-            alert(`Login failed: ${error.message}`);
+            // Don't alert if user rejected
+            if (error.code !== 4001) {
+                alert(`Login failed: ${error.message}`);
+            }
+            // If failed, clear pending so UI resets
+            setPendingSignIn(false);
         } finally {
             setLoading(false);
         }
-    }, [walletProvider, address]);
+    }, [walletProvider]);
+
+    // Backwards compatibility for useEffect
+    const completeSignIn = () => performLogin();
 
     // Helper to detect MetaMask in-app browser
     const isMetaMaskInApp = () => {
         if (typeof window === 'undefined') return false;
         const ethereum = (window as any).ethereum;
         return ethereum?.isMetaMask && /Mobile/.test(navigator.userAgent);
-    };
-
-    // Helper to clear all WalletConnect sessions and cache
-    const clearAllSessions = async () => {
-        try {
-            await disconnect();
-
-            // Clear WalletConnect storage
-            if (typeof window !== 'undefined') {
-                Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('wc@2:') ||
-                        key.startsWith('W3M_') ||
-                        key.startsWith('@w3m/') ||
-                        key.startsWith('@appkit/') ||
-                        key.includes('walletconnect')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (e) {
-            console.log('[Auth] Session cleanup:', e);
-        }
     };
 
     const signIn = async () => {
@@ -132,30 +126,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Handle MetaMask in-app browser separately for better UX
+        // Direct Injection Fallback (Desktop / Extension Users)
+        // This bypasses AppKit modal issues for MetaMask/Rabby
+        if (typeof window !== 'undefined' && (window as any).ethereum && !/Mobile/.test(navigator.userAgent)) {
+            try {
+                setPendingSignIn(true);
+                setLoading(true);
+                const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts && accounts[0]) {
+                    await performLogin((window as any).ethereum, accounts[0]);
+                    return;
+                }
+            } catch (e: any) {
+                console.warn('Direct connect failed, falling back to modal:', e);
+                // Fallthrough to open()
+            }
+        }
+
+        // Handle MetaMask in-app browser separately
         if (isMetaMaskInApp()) {
             try {
                 setPendingSignIn(true);
                 setLoading(true);
-
                 const ethereum = (window as any).ethereum;
                 await ethereum.request({ method: 'eth_requestAccounts' });
-
-                // The useEffect will handle the rest when isConnected becomes true
             } catch (error: any) {
                 console.error('MetaMask in-app connection failed:', error);
-                alert(`Connection failed: ${error.message}`);
                 setPendingSignIn(false);
                 setLoading(false);
             }
             return;
         }
 
-        // For all other cases, use AppKit modal
-        // First, clear any stale sessions
-        await clearAllSessions();
-
-        // Open AppKit modal
+        // Standard AppKit Modal
         setPendingSignIn(true);
         setLoading(true);
 
@@ -212,9 +215,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             signOut,
             refreshProfile,
             getSigner: async () => {
-                if (!walletProvider) throw new Error('Wallet not connected');
-                const provider = new ethers.providers.Web3Provider(walletProvider as any);
-                return await provider.getSigner();
+                if (walletProvider) {
+                    const provider = new ethers.providers.Web3Provider(walletProvider as any);
+                    return await provider.getSigner();
+                }
+                // Fallback for direct connection
+                if (user && (window as any).ethereum) {
+                    const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+                    return await provider.getSigner();
+                }
+                throw new Error('Wallet not connected');
             }
         }}>
             {children}

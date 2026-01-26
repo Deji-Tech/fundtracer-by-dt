@@ -28,6 +28,21 @@ export async function usageMiddleware(
         // Determine user tier and limit
         const tier = (userData?.tier || 'free') as 'free' | 'pro' | 'max';
 
+        // Check chain access based on tier
+        const chain = req.body.chain;
+        if (chain) {
+            const isAllowed = tier === 'max' ||
+                (tier === 'pro' && ['linea', 'arbitrum', 'base'].includes(chain)) ||
+                (tier === 'free' && chain === 'linea');
+
+            if (!isAllowed) {
+                return res.status(403).json({
+                    error: 'Chain restricted',
+                    message: `The ${chain} chain is not available on the ${tier} tier. Please upgrade to access this chain.`
+                });
+            }
+        }
+
         let dailyLimit = 7; // Default Free
         if (tier === 'pro') dailyLimit = 25;
         if (tier === 'max') dailyLimit = Infinity;

@@ -13,8 +13,8 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'f55ba487b823
 const metadata = {
     name: 'FundTracer',
     description: 'Trace with Precision. Scale with Confidence.',
-    url: 'https://fundtracer-by-dt.pxxl.click', // origin must match your domain & subdomain
-    icons: ['https://fundtracer-by-dt.pxxl.click/logo.png']
+    url: 'https://fundtracer.xyz', // origin must match your domain & subdomain
+    icons: ['https://fundtracer.xyz/logo.png']
 };
 
 // Create the AppKit instance
@@ -41,6 +41,9 @@ createAppKit({
         'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase Wallet
         'a797aa35c0fadbfc1a53e7f675162ed5226968b44a19ee3d24385c64d1d3c393', // Rabby Wallet
     ],
+    enableInjected: true,
+    enableEIP6963: true,
+    enableCoinbase: true,
 });
 
 export { projectId };

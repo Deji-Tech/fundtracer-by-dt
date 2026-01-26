@@ -261,7 +261,12 @@ router.post('/wallet', async (req: AuthenticatedRequest, res: Response) => {
         const analyzer = new WalletAnalyzer({
             alchemy: alchemyKey,
             moralis: process.env.MORALIS_API_KEY,
+            etherscan: process.env.ETHERSCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
             lineascan: process.env.LINEASCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            arbiscan: process.env.ARBISCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            basescan: process.env.BASESCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            optimism: process.env.OPTIMISM_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            polygonscan: process.env.POLYGONSCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
         });
 
         // Pagination params
@@ -340,7 +345,12 @@ router.post('/compare', async (req: AuthenticatedRequest, res: Response) => {
         const analyzer = new WalletAnalyzer({
             alchemy: alchemyKey,
             moralis: process.env.MORALIS_API_KEY,
+            etherscan: process.env.ETHERSCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
             lineascan: process.env.LINEASCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            arbiscan: process.env.ARBISCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            basescan: process.env.BASESCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            optimism: process.env.OPTIMISM_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            polygonscan: process.env.POLYGONSCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
         });
 
         const result = await analyzer.compareWallets(addresses, chain as ChainId, options);
@@ -398,7 +408,12 @@ router.post('/contract', async (req: AuthenticatedRequest, res: Response) => {
         const analyzer = new WalletAnalyzer({
             alchemy: alchemyKey,
             moralis: process.env.MORALIS_API_KEY,
+            etherscan: process.env.ETHERSCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
             lineascan: process.env.LINEASCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            arbiscan: process.env.ARBISCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            basescan: process.env.BASESCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            optimism: process.env.OPTIMISM_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
+            polygonscan: process.env.POLYGONSCAN_API_KEY || process.env.DEFAULT_ETHERSCAN_API_KEY,
         });
 
         // Try to fetch interactors from Dune first if configured

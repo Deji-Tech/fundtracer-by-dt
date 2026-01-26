@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Transaction, ChainId, TxCategory, TxStatus, CHAINS } from '@fundtracer/core';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Transaction, ChainId, TxStatus, CHAINS } from '@fundtracer/core';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { getLabel } from '../utils/addressBook';
 
 interface TransactionListProps {
     transactions: Transaction[];
@@ -171,11 +172,15 @@ function TransactionList({ transactions, chain, pagination, loadingMore, onLoadM
                             </div>
                             <div style={{ marginTop: 8, fontSize: 10, color: 'var(--color-text-muted)' }}>
                                 <div style={{ marginBottom: 2 }}>
-                                    From: <span style={{ fontFamily: 'monospace' }}>{tx.from.slice(0, 10)}...</span>
+                                    From: <span style={{ fontFamily: 'monospace' }}>
+                                        {getLabel(tx.from) || (tx as any).fromLabel || tx.from.slice(0, 10) + '...'}
+                                    </span>
                                 </div>
                                 {tx.to && (
                                     <div>
-                                        To: <span style={{ fontFamily: 'monospace' }}>{tx.to.slice(0, 10)}...</span>
+                                        To: <span style={{ fontFamily: 'monospace' }}>
+                                            {getLabel(tx.to) || (tx as any).toLabel || tx.to.slice(0, 10) + '...'}
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -234,10 +239,10 @@ function TransactionList({ transactions, chain, pagination, loadingMore, onLoadM
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="tx-address"
-                                            style={{ color: 'var(--color-text-primary)' }}
+                                            style={{ color: getLabel(tx.from) ? 'var(--color-primary-text)' : 'var(--color-text-primary)', fontWeight: getLabel(tx.from) ? 600 : 400 }}
                                             title={tx.from}
                                         >
-                                            {(tx as any).fromLabel || formatAddress(tx.from)}
+                                            {getLabel(tx.from) || (tx as any).fromLabel || formatAddress(tx.from)}
                                         </a>
                                         {(tx as any).fromType === 'token' && (
                                             <span style={{ marginLeft: '4px', fontSize: '10px', color: 'var(--color-primary)' }}>🪙</span>
@@ -255,12 +260,12 @@ function TransactionList({ transactions, chain, pagination, loadingMore, onLoadM
                                                     rel="noopener noreferrer"
                                                     className="tx-address"
                                                     style={{
-                                                        color: (tx as any).toLabel ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                                                        fontWeight: (tx as any).toLabel ? 500 : 400
+                                                        color: getLabel(tx.to) || (tx as any).toLabel ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                                                        fontWeight: getLabel(tx.to) || (tx as any).toLabel ? 500 : 400
                                                     }}
                                                     title={tx.to}
                                                 >
-                                                    {(tx as any).toLabel || formatAddress(tx.to)}
+                                                    {getLabel(tx.to) || (tx as any).toLabel || formatAddress(tx.to)}
                                                 </a>
                                                 {(tx as any).toType === 'token' && (
                                                     <span style={{ marginLeft: '4px', fontSize: '10px', color: 'var(--color-primary)' }} title="Token Contract">🪙</span>
