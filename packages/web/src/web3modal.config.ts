@@ -6,7 +6,6 @@ import { linea } from '@reown/appkit/networks';
 
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'f55ba487b823b0308e4621a87d4ebf76';
 
-// IMPORTANT: URL must exactly match your domain (no trailing slash)
 const metadata = {
     name: 'FundTracer',
     description: 'Trace with Precision. Scale with Confidence.',
@@ -14,7 +13,7 @@ const metadata = {
     icons: ['https://fundtracer.xyz/logo.png']
 };
 
-export const appKit = createAppKit({
+createAppKit({
     adapters: [new Ethers5Adapter()],
     metadata,
     networks: [linea],
