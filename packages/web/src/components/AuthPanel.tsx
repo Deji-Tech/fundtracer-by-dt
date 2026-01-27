@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { saveAlchemyKey, removeAlchemyKey } from '../api';
 import TerminalAnimation from './TerminalAnimation';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 interface AuthPanelProps {
     showApiKeyForm: boolean;
@@ -10,30 +11,25 @@ interface AuthPanelProps {
 
 function AuthPanel({ showApiKeyForm, setShowApiKeyForm }: AuthPanelProps) {
     const { user, profile, loading, signIn, signOut, refreshProfile } = useAuth();
+    const { openConnectModal } = useConnectModal();
 
-    // Alchemy key state (truncated for brevity in diff, existing code remains same logic)
     const [alchemyKeyInput, setAlchemyKeyInput] = useState('');
     const [alchemyKeyError, setAlchemyKeyError] = useState('');
     const [alchemyKeySaving, setAlchemyKeySaving] = useState(false);
 
-    // Pricing visibility
-    const [showPricing, setShowPricing] = useState(false);
-
     const handleSignIn = async () => {
-        try {
-            await signIn();
-        } catch (error: any) {
-            console.error('Sign-in error:', error);
+        if (openConnectModal) {
+            openConnectModal();
+        } else {
+            try {
+                await signIn();
+            } catch (error: any) {
+                console.error('Sign-in error:', error);
+            }
         }
     };
-    // ... existing handlers ...
+
     const handleSaveAlchemyKey = async () => {
-        // ... (reuse existing logic if possible, or re-include it)
-        // Since I'm using replace_file_content on the whole file or large chunk, I must be careful not to delete logic.
-        // Actually, I can just replace the imports and the render part.
-        // But `handleSaveAlchemyKey` is in the middle.
-        // I will target the imports and then the render block separately if possible?
-        // No, `multi_replace` or just replace the top block and the render block.
         if (!alchemyKeyInput.trim()) {
             setAlchemyKeyError('Please enter an Alchemy API key');
             return;
