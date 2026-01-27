@@ -11,6 +11,10 @@ export interface AuthenticatedRequest extends express.Request {
         email: string;
         name?: string;
     };
+    body: any;
+    params: any;
+    query: any;
+    headers: express.Request['headers'];
 }
 
 import jwt from 'jsonwebtoken';
