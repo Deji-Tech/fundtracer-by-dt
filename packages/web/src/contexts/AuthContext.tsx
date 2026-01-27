@@ -51,8 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check for pending auth on mount (for mobile redirect recovery)
     useEffect(() => {
         const pendingAuth = sessionStorage.getItem(AUTH_PENDING_KEY);
-        if (pendingAuth && isConnected && walletProvider && address) {
-            // User returned from wallet app, complete sign in
+        if (pendingAuth && isConnected && walletProvider && address && !signInInProgress.current) {
             sessionStorage.removeItem(AUTH_PENDING_KEY);
             completeSignIn();
         }
@@ -60,22 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check existing auth on mount
     useEffect(() => {
-        const token = getAuthToken();
-        if (token) {
-            getProfile()
-                .then(userProfile => {
+        const initAuth = async () => {
+            const token = getAuthToken();
+            if (token) {
+                try {
+                    const userProfile = await getProfile();
                     setProfile(userProfile);
                     setUser({ address: userProfile.email });
-                })
-                .catch(() => {
+                } catch {
                     removeAuthToken();
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        } else {
+                }
+            }
             setLoading(false);
-        }
+        };
+        initAuth();
     }, []);
 
     const completeSignIn = async () => {
@@ -106,21 +103,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 tier: loginResponse.user.tier
             });
 
-            // Clear any pending state
             sessionStorage.removeItem(AUTH_PENDING_KEY);
-
         } catch (error: any) {
             const isUserRejection =
                 error.code === 4001 ||
                 error.code === 'ACTION_REJECTED' ||
                 error.message?.includes('rejected') ||
-                error.message?.includes('cancelled');
+                error.message?.includes('cancelled') ||
+                error.message?.includes('user denied');
 
             if (!isUserRejection) {
                 alert(`Login failed: ${error.message || 'Unknown error'}`);
             }
 
-            // Clear pending state on error
             sessionStorage.removeItem(AUTH_PENDING_KEY);
         } finally {
             setLoading(false);
@@ -143,7 +138,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
             await open();
-            // On mobile, the browser will pause here when switching to wallet app
+
+            // Mobile fallback: if deep link doesn't trigger automatically, force it
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                setTimeout(() => {
+                    const stillPending = sessionStorage.getItem(AUTH_PENDING_KEY);
+                    if (stillPending && !isConnected) {
+                        // Force redirect to MetaMask if deep link didn't work
+                        const currentHost = window.location.host;
+                        window.location.href = `https://metamask.app.link/dapp/${currentHost}`;
+                    }
+                }, 2000);
+            }
         } catch (error) {
             sessionStorage.removeItem(AUTH_PENDING_KEY);
             setLoading(false);
@@ -159,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
             await disconnect();
+
             if (typeof window !== 'undefined') {
                 Object.keys(localStorage).forEach(key => {
                     if (
