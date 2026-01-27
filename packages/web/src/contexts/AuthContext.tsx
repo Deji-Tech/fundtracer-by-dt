@@ -82,6 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return ethereum;
     }, []);
 
+    const isMobile = useCallback((): boolean => {
+        return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
+            navigator.userAgent
+        );
+    }, []);
+
     const performLogin = useCallback(async (
         providerInput?: any,
         addressInput?: string
@@ -152,15 +158,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signIn = async () => {
         if (user) return;
 
+        // Already connected via AppKit
         if (isConnected && walletProvider && address) {
             await performLogin();
             return;
         }
 
+        // Small delay for provider injection (mainly for mobile)
         await new Promise(r => setTimeout(r, 100));
 
         const ethereum = getEthereumProvider();
+        const mobile = isMobile();
 
+        // No injected provider - open AppKit modal
         if (!ethereum) {
             setPendingSignIn(true);
             setLoading(true);
@@ -173,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
+        // Already connected (common on mobile wallet browsers)
         if (ethereum.selectedAddress) {
             setLoading(true);
             await performLogin(ethereum, ethereum.selectedAddress);
@@ -184,13 +195,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             let accounts: string[] = [];
 
-            try {
-                await ethereum.request({
-                    method: 'wallet_requestPermissions',
-                    params: [{ eth_accounts: {} }]
-                });
-                accounts = await ethereum.request({ method: 'eth_accounts' });
-            } catch {
+            if (mobile) {
+                // MOBILE: Try wallet_requestPermissions first (works better on some mobile wallets)
+                try {
+                    await ethereum.request({
+                        method: 'wallet_requestPermissions',
+                        params: [{ eth_accounts: {} }]
+                    });
+                    accounts = await ethereum.request({ method: 'eth_accounts' });
+                } catch {
+                    accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                }
+            } else {
+                // DESKTOP: Use eth_requestAccounts directly (triggers MetaMask popup)
                 accounts = await ethereum.request({ method: 'eth_requestAccounts' });
             }
 
@@ -206,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
+            // Fallback to AppKit modal
             setPendingSignIn(true);
             try {
                 await open();
