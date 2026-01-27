@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-const { parseEther } = ethers.utils;
+const { parseEther } = ethers;
 import { ChainId, AnalysisResult, MultiWalletResult, getEnabledChains, CHAINS } from '@fundtracer/core';
 import { useAuth } from './contexts/AuthContext';
 import { analyzeWallet, compareWallets, analyzeContract, loadMoreTransactions, trackVisit } from './api';
@@ -133,7 +133,7 @@ function App() {
 
             // Check Chain ID
             const network = await provider.getNetwork();
-            if (network.chainId !== parseInt(LINEA_CHAIN_ID, 16) && network.chainId !== 59144) {
+            if (network.chainId !== BigInt(59144)) {
                 // Try to switch network using underlying provider if possible
                 try {
                     // EIP-3326

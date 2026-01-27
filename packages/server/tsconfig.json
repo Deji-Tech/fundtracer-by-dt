@@ -2,11 +2,27 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "rootDir": "../../",
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "node",
         "noImplicitAny": false,
         "declaration": false,
         "declarationMap": false,
-        "sourceMap": false
+        "sourceMap": false,
+        "types": [
+            "node",
+            "express",
+            "cors"
+        ],
+        "paths": {
+            "@fundtracer/core": [
+                "../core/dist/index"
+            ]
+        }
     },
     "include": [
         "src/**/*"
