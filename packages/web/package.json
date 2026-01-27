@@ -10,11 +10,13 @@
     },
     "dependencies": {
         "@fundtracer/core": "*",
-        "@reown/appkit": "^1.8.17",
-        "@reown/appkit-adapter-ethers5": "^1.8.17",
+        "@rainbow-me/rainbowkit": "^2.2.10",
+        "@reown/appkit": "^1.7.8",
+        "@reown/appkit-adapter-ethers": "^1.8.17",
+        "@tanstack/react-query": "^5.90.20",
         "@vitejs/plugin-react": "^4.2.1",
         "d3": "^7.8.5",
-        "ethers": "^5.7.2",
+        "ethers": "^6.16.0",
         "ethers5": "npm:ethers@^5.8.0",
         "firebase": "^10.7.1",
         "jspdf": "^4.0.0",
@@ -22,7 +24,9 @@
         "lucide-react": "^0.294.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "vite": "^5.0.10"
+        "viem": "^2.45.0",
+        "vite": "^5.0.10",
+        "wagmi": "^2.19.5"
     },
     "devDependencies": {
         "@types/d3": "^7.4.3",
