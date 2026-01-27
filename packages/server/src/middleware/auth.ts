@@ -2,10 +2,10 @@
 // Authentication Middleware - Verify Firebase ID Token
 // ============================================================
 
-import { Request, Response, NextFunction } from 'express';
+import express, { Response, NextFunction } from 'express';
 import { getAuth, getFirestore } from '../firebase.js';
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends express.Request {
     user?: {
         uid: string;
         email: string;
