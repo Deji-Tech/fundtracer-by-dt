@@ -6,7 +6,9 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
 import { config } from './rainbowkit.config';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
-import './index.css';
+import './styles/variables.css';
+import './styles/components.css';
+import './styles/animations.css';
 
 const queryClient = new QueryClient();
 
