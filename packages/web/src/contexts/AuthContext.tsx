@@ -42,96 +42,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [pendingSignIn, setPendingSignIn] = useState(false);
     const signInInProgress = useRef(false);
+    const hasTriedAutoLogin = useRef(false);
 
     const { open } = useAppKit();
-    const { address, isConnected } = useAppKitAccount();
+    const { address, isConnected, status } = useAppKitAccount();
     const { walletProvider } = useAppKitProvider('eip155');
     const { disconnect } = useDisconnect();
 
+    // Check for existing JWT auth on mount
     useEffect(() => {
-        checkAuth();
-    }, []);
-
-    const checkAuth = async () => {
         const token = getAuthToken();
         if (token) {
-            try {
-                const userProfile = await getProfile();
-                setProfile(userProfile);
-                setUser({ address: userProfile.email });
-            } catch (error) {
-                removeAuthToken();
-                setUser(null);
-                setProfile(null);
-            }
+            getProfile()
+                .then(userProfile => {
+                    setProfile(userProfile);
+                    setUser({ address: userProfile.email });
+                })
+                .catch(() => {
+                    removeAuthToken();
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
-    };
+    }, []);
 
-    const getEthereumProvider = useCallback((): any => {
-        const ethereum = (window as any).ethereum;
-        if (!ethereum) return null;
+    // Watch for wallet connection changes (handles return from wallet app)
+    useEffect(() => {
+        // Skip if already logged in or not pending
+        if (user || !pendingSignIn) return;
 
-        if (ethereum.providers?.length) {
-            const preferred = ethereum.providers.find(
-                (p: any) => p.isMetaMask || p.isRabby
-            );
-            return preferred || ethereum.providers[0];
+        // Wait for connected status with provider
+        if (isConnected && walletProvider && address && !signInInProgress.current) {
+            completeSignIn();
         }
+    }, [isConnected, walletProvider, address, pendingSignIn, user]);
 
-        return ethereum;
-    }, []);
+    // Auto-complete login if user returns to page already connected
+    useEffect(() => {
+        if (
+            !user &&
+            !loading &&
+            !hasTriedAutoLogin.current &&
+            isConnected &&
+            walletProvider &&
+            address &&
+            !getAuthToken()
+        ) {
+            hasTriedAutoLogin.current = true;
+            // User is connected but not logged in - they probably returned from wallet
+            setPendingSignIn(true);
+        }
+    }, [user, loading, isConnected, walletProvider, address]);
 
-    const isMobile = useCallback((): boolean => {
-        return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
-            navigator.userAgent
-        );
-    }, []);
-
-    const isWalletBrowser = useCallback((): boolean => {
-        const ethereum = (window as any).ethereum;
-        if (!ethereum) return false;
-        return !!(ethereum.isMetaMask || ethereum.isRabby || ethereum.isTrust || ethereum.isCoinbaseWallet);
-    }, []);
-
-    // Open MetaMask app directly via deep link
-    const openMetaMaskDeepLink = useCallback(() => {
-        const currentUrl = encodeURIComponent(window.location.href);
-
-        // MetaMask deep link format
-        const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
-
-        window.location.href = metamaskDeepLink;
-    }, []);
-
-    const performLogin = useCallback(async (
-        providerInput?: any,
-        addressInput?: string
-    ) => {
+    const completeSignIn = async () => {
         if (signInInProgress.current) return;
-
         signInInProgress.current = true;
 
         try {
             setLoading(true);
-            setPendingSignIn(false);
 
-            let provider: ethers.providers.Web3Provider;
-            let walletAddress = addressInput;
-
-            if (providerInput) {
-                provider = new ethers.providers.Web3Provider(providerInput);
-            } else if (walletProvider) {
-                provider = new ethers.providers.Web3Provider(walletProvider as any);
-            } else {
-                throw new Error('No provider available');
+            if (!walletProvider) {
+                throw new Error('No wallet provider');
             }
 
+            const provider = new ethers.providers.Web3Provider(walletProvider as any);
             const signer = provider.getSigner();
-
-            if (!walletAddress) {
-                walletAddress = await signer.getAddress();
-            }
+            const walletAddress = await signer.getAddress();
 
             const timestamp = Date.now();
             const message = `Login to FundTracer\nTimestamp: ${timestamp}`;
@@ -148,11 +127,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 tier: loginResponse.user.tier
             });
 
+            setPendingSignIn(false);
+
         } catch (error: any) {
             const isUserRejection =
                 error.code === 4001 ||
                 error.code === 'ACTION_REJECTED' ||
-                error.message?.includes('rejected');
+                error.message?.includes('rejected') ||
+                error.message?.includes('denied');
 
             if (!isUserRejection) {
                 alert(`Login failed: ${error.message || 'Unknown error'}`);
@@ -163,108 +145,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
             signInInProgress.current = false;
         }
-    }, [walletProvider]);
-
-    useEffect(() => {
-        if (pendingSignIn && isConnected && walletProvider && address) {
-            performLogin();
-        }
-    }, [pendingSignIn, isConnected, walletProvider, address, performLogin]);
+    };
 
     const signIn = async () => {
+        // Already logged in
         if (user) return;
 
+        // Already connected - just need to sign
         if (isConnected && walletProvider && address) {
-            await performLogin();
+            await completeSignIn();
             return;
         }
 
-        const mobile = isMobile();
-        const walletBrowser = isWalletBrowser();
-        const ethereum = getEthereumProvider();
-
-        // MOBILE: Regular browser (Chrome/Safari) - no wallet extension
-        if (mobile && !walletBrowser && !ethereum) {
-            // Directly open MetaMask via deep link instead of using AppKit modal
-            openMetaMaskDeepLink();
-            return;
-        }
-
-        // MOBILE: Inside wallet browser (MetaMask/Rabby app)
-        if (mobile && ethereum) {
-            await new Promise(r => setTimeout(r, 100));
-
-            if (ethereum.selectedAddress) {
-                setLoading(true);
-                await performLogin(ethereum, ethereum.selectedAddress);
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                let accounts: string[] = [];
-
-                try {
-                    await ethereum.request({
-                        method: 'wallet_requestPermissions',
-                        params: [{ eth_accounts: {} }]
-                    });
-                    accounts = await ethereum.request({ method: 'eth_accounts' });
-                } catch {
-                    accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                }
-
-                if (accounts?.[0]) {
-                    await performLogin(ethereum, accounts[0]);
-                } else {
-                    setLoading(false);
-                }
-            } catch (error: any) {
-                setLoading(false);
-
-                if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
-                    return;
-                }
-            }
-            return;
-        }
-
-        // DESKTOP: With wallet extension
-        if (!mobile && ethereum) {
-            setLoading(true);
-
-            try {
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-
-                if (accounts?.[0]) {
-                    await performLogin(ethereum, accounts[0]);
-                } else {
-                    setLoading(false);
-                }
-            } catch (error: any) {
-                setLoading(false);
-
-                if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
-                    return;
-                }
-
-                setPendingSignIn(true);
-                try {
-                    await open();
-                } catch {
-                    setPendingSignIn(false);
-                }
-            }
-            return;
-        }
-
-        // DESKTOP: No wallet extension - show modal
+        // Set pending and open modal
         setPendingSignIn(true);
         setLoading(true);
+
         try {
             await open();
-        } catch {
+            // Modal is now open
+            // The useEffect watching isConnected will handle the rest
+            // when user connects their wallet
+        } catch (error) {
             setPendingSignIn(false);
             setLoading(false);
         }
@@ -274,7 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         removeAuthToken();
         setUser(null);
         setProfile(null);
+        setPendingSignIn(false);
         signInInProgress.current = false;
+        hasTriedAutoLogin.current = false;
 
         try {
             await disconnect();
@@ -308,15 +212,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const provider = new ethers.providers.Web3Provider(walletProvider as any);
             return provider.getSigner();
         }
-
-        const ethereum = getEthereumProvider();
-        if (ethereum) {
-            const provider = new ethers.providers.Web3Provider(ethereum);
-            return provider.getSigner();
-        }
-
         throw new Error('Wallet not connected');
-    }, [walletProvider, getEthereumProvider]);
+    }, [walletProvider]);
 
     return (
         <AuthContext.Provider value={{
