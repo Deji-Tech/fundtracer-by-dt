@@ -1,10 +1,9 @@
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAccount } from 'wagmi'
 import { useAuth } from '../contexts/AuthContext'
 
 export function ConnectButton() {
-    const { open } = useAppKit()
-    const { address, isConnected } = useAppKitAccount()
-    const { user, signOut, loading } = useAuth()
+    const { address, isConnected } = useAccount()
+    const { user, signOut, signIn, loading } = useAuth()
 
     if (loading) {
         return <button disabled className="px-4 py-2 bg-gray-700 rounded">Loading...</button>
@@ -23,7 +22,7 @@ export function ConnectButton() {
 
     return (
         <button
-            onClick={() => open()}
+            onClick={() => signIn()}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white"
         >
             Connect Wallet
