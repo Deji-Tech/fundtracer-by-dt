@@ -1,27 +1,32 @@
-import { ConnectButton as RainbowConnectButton } from '@rainbow-me/rainbowkit';
-import { useAuth } from '../contexts/AuthContext';
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAuth } from '../contexts/AuthContext'
 
 export function ConnectButton() {
-    const { user, signOut, loading } = useAuth();
+    const { open } = useAppKit()
+    const { address, isConnected } = useAppKitAccount()
+    const { user, signOut, loading } = useAuth()
 
     if (loading) {
-        return (
-            <button disabled className="px-4 py-2 bg-gray-700 rounded-lg">
-                Loading...
-            </button>
-        );
+        return <button disabled className="px-4 py-2 bg-gray-700 rounded">Loading...</button>
     }
 
-    if (user) {
+    if (user || (isConnected && address)) {
         return (
             <button
-                onClick={signOut}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white"
+                onClick={() => signOut()}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white"
             >
-                Disconnect
+                Disconnect {address?.slice(0, 6)}...
             </button>
-        );
+        )
     }
 
-    return <RainbowConnectButton />;
+    return (
+        <button
+            onClick={() => open()}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white"
+        >
+            Connect Wallet
+        </button>
+    )
 }
