@@ -7,22 +7,9 @@ import React, {
     useCallback,
     useRef
 } from 'react';
-import {
-    useAppKit,
-    useAppKitAccount,
-    useAppKitProvider,
-    useDisconnect
-} from '@reown/appkit/react';
+import { useAccount, useDisconnect, useSignMessage, useConnectorClient } from 'wagmi';
 import { ethers } from 'ethers';
-import {
-    getProfile,
-    loginWithWallet,
-    removeAuthToken,
-    getAuthToken,
-    UserProfile
-} from '../api';
-
-const AUTH_PENDING_KEY = 'fundtracer_auth_pending';
+import { getProfile, loginWithWallet, removeAuthToken, getAuthToken, UserProfile } from '../api';
 
 interface AuthContextType {
     user: { address: string } | null;
@@ -42,81 +29,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const signInInProgress = useRef(false);
 
-    // AppKit hooks
-    const { open } = useAppKit();
-    const { address, isConnected } = useAppKitAccount();
-    const { walletProvider } = useAppKitProvider('eip155');
-    const { disconnect } = useDisconnect();
-
-    // Check for pending auth on mount (for mobile redirect recovery)
-    useEffect(() => {
-        const pendingAuth = sessionStorage.getItem(AUTH_PENDING_KEY);
-        if (pendingAuth && isConnected && walletProvider && address && !signInInProgress.current) {
-            sessionStorage.removeItem(AUTH_PENDING_KEY);
-            completeSignIn();
-        }
-    }, [isConnected, walletProvider, address]);
+    const { address, isConnected } = useAccount();
+    const { disconnectAsync } = useDisconnect();
+    const { signMessageAsync } = useSignMessage();
+    const { data: client } = useConnectorClient();
 
     // Check existing auth on mount
     useEffect(() => {
-        const initAuth = async () => {
-            const token = getAuthToken();
-            if (token) {
-                try {
-                    const userProfile = await getProfile();
+        const token = getAuthToken();
+        if (token) {
+            getProfile()
+                .then(userProfile => {
                     setProfile(userProfile);
                     setUser({ address: userProfile.email });
-                } catch {
-                    removeAuthToken();
-                }
-            }
+                })
+                .catch(() => removeAuthToken())
+                .finally(() => setLoading(false));
+        } else {
             setLoading(false);
-        };
-        initAuth();
+        }
     }, []);
 
-    const completeSignIn = async () => {
-        if (signInInProgress.current) return;
+    // Handle successful connection
+    useEffect(() => {
+        if (isConnected && address && !user && !signInInProgress.current) {
+            performLogin();
+        }
+    }, [isConnected, address]);
+
+    const performLogin = async () => {
+        if (signInInProgress.current || !address) return;
         signInInProgress.current = true;
         setLoading(true);
 
         try {
-            if (!walletProvider) {
-                throw new Error('No wallet provider');
-            }
-
-            const provider = new ethers.providers.Web3Provider(walletProvider as any);
-            const signer = provider.getSigner();
-            const walletAddress = await signer.getAddress();
-
             const timestamp = Date.now();
             const message = `Login to FundTracer\nTimestamp: ${timestamp}`;
-            const signature = await signer.signMessage(message);
+            const signature = await signMessageAsync({ message });
 
-            const loginResponse = await loginWithWallet(walletAddress, signature, message);
+            const loginResponse = await loginWithWallet(address, signature, message);
+            setUser({ address });
 
-            setUser({ address: walletAddress });
             const userProfile = await getProfile();
             setProfile({
                 ...userProfile,
                 isVerified: loginResponse.user.isVerified,
                 tier: loginResponse.user.tier
             });
-
-            sessionStorage.removeItem(AUTH_PENDING_KEY);
         } catch (error: any) {
-            const isUserRejection =
-                error.code === 4001 ||
-                error.code === 'ACTION_REJECTED' ||
-                error.message?.includes('rejected') ||
-                error.message?.includes('cancelled') ||
-                error.message?.includes('user denied');
-
-            if (!isUserRejection) {
+            console.error('Login error:', error);
+            if (!error.message?.includes('rejected') && !error.message?.includes('denied')) {
                 alert(`Login failed: ${error.message || 'Unknown error'}`);
             }
-
-            sessionStorage.removeItem(AUTH_PENDING_KEY);
+            // Disconnect on failure
+            await disconnectAsync().catch(() => { });
         } finally {
             setLoading(false);
             signInInProgress.current = false;
@@ -125,62 +91,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signIn = async () => {
         if (user) return;
-
-        // Already connected - complete sign in immediately
-        if (isConnected && walletProvider && address) {
-            await completeSignIn();
-            return;
-        }
-
-        // Mark as pending BEFORE opening modal (crucial for mobile)
-        sessionStorage.setItem(AUTH_PENDING_KEY, 'true');
-        setLoading(true);
-
-        try {
-            await open();
-
-            // Mobile fallback: if deep link doesn't trigger automatically, force it
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
-                setTimeout(() => {
-                    const stillPending = sessionStorage.getItem(AUTH_PENDING_KEY);
-                    if (stillPending && !isConnected) {
-                        // Force redirect to MetaMask if deep link didn't work
-                        const currentHost = window.location.host;
-                        window.location.href = `https://metamask.app.link/dapp/${currentHost}`;
-                    }
-                }, 2000);
-            }
-        } catch (error) {
-            sessionStorage.removeItem(AUTH_PENDING_KEY);
-            setLoading(false);
-        }
+        // RainbowKit modal opens automatically via ConnectButton
+        // If using custom button: import { useConnectModal } from '@rainbow-me/rainbowkit'
     };
 
     const signOut = async () => {
         removeAuthToken();
         setUser(null);
         setProfile(null);
-        signInInProgress.current = false;
-        sessionStorage.removeItem(AUTH_PENDING_KEY);
-
         try {
-            await disconnect();
-
-            if (typeof window !== 'undefined') {
-                Object.keys(localStorage).forEach(key => {
-                    if (
-                        key.startsWith('wc@2:') ||
-                        key.startsWith('W3M_') ||
-                        key.startsWith('@w3m/') ||
-                        key.startsWith('@appkit/') ||
-                        key.includes('walletconnect')
-                    ) {
-                        localStorage.removeItem(key);
-                    }
-                });
-            }
+            await disconnectAsync();
         } catch { }
+        if (typeof window !== 'undefined') {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('wagmi') || key.includes('walletconnect')) {
+                    localStorage.removeItem(key);
+                }
+            });
+        }
     };
 
     const refreshProfile = async () => {
@@ -192,12 +120,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const getSigner = useCallback(async (): Promise<ethers.providers.JsonRpcSigner> => {
-        if (walletProvider) {
-            const provider = new ethers.providers.Web3Provider(walletProvider as any);
-            return provider.getSigner();
-        }
-        throw new Error('Wallet not connected');
-    }, [walletProvider]);
+        if (!client) throw new Error('Wallet not connected');
+
+        const { account, chain, transport } = client;
+        const network = {
+            chainId: chain.id,
+            name: chain.name,
+            ensAddress: chain.contracts?.ensRegistry?.address,
+        };
+        const provider = new ethers.providers.Web3Provider(transport as any, network);
+        const signer = provider.getSigner(account.address);
+        return signer;
+    }, [client]);
 
     return (
         <AuthContext.Provider value={{
@@ -216,8 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 }
