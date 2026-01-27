@@ -69,6 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    const isMobile = (): boolean => {
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    };
+
+    const hasInjectedWallet = (): boolean => {
+        return typeof window !== 'undefined' && !!(window as any).ethereum;
+    };
+
     // Handle connection state changes
     useEffect(() => {
         if (pendingSignIn && isConnected && walletProvider && address) {
@@ -132,6 +140,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isConnected && walletProvider && address) {
             await completeSignIn();
             return;
+        }
+
+        if (isMobile() && !hasInjectedWallet()) {
+            const openInMetaMask = window.confirm(
+                'Open this site in MetaMask app?\n\n' +
+                'Tap OK to open MetaMask\n' +
+                'Tap Cancel to scan QR with any wallet'
+            );
+
+            if (openInMetaMask) {
+                const host = window.location.host;
+                const path = window.location.pathname;
+                window.location.href = `https://metamask.app.link/dapp/${host}${path}`;
+                return;
+            }
         }
 
         // Open AppKit modal
