@@ -1,5 +1,3 @@
-// packages/web/src/contexts/AuthContext.tsx
-
 import React, {
     createContext,
     useContext,
@@ -24,6 +22,8 @@ import {
     UserProfile
 } from '../api';
 
+const AUTH_PENDING_KEY = 'fundtracer_auth_pending';
+
 interface AuthContextType {
     user: { address: string } | null;
     profile: UserProfile | null;
@@ -40,7 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<{ address: string } | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [pendingSignIn, setPendingSignIn] = useState(false);
     const signInInProgress = useRef(false);
 
     // AppKit hooks
@@ -48,6 +47,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { address, isConnected } = useAppKitAccount();
     const { walletProvider } = useAppKitProvider('eip155');
     const { disconnect } = useDisconnect();
+
+    // Check for pending auth on mount (for mobile redirect recovery)
+    useEffect(() => {
+        const pendingAuth = sessionStorage.getItem(AUTH_PENDING_KEY);
+        if (pendingAuth && isConnected && walletProvider && address) {
+            // User returned from wallet app, complete sign in
+            sessionStorage.removeItem(AUTH_PENDING_KEY);
+            completeSignIn();
+        }
+    }, [isConnected, walletProvider, address]);
 
     // Check existing auth on mount
     useEffect(() => {
@@ -69,20 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // Handle connection state changes
-    useEffect(() => {
-        if (pendingSignIn && isConnected && walletProvider && address) {
-            completeSignIn();
-        }
-    }, [pendingSignIn, isConnected, walletProvider, address]);
-
     const completeSignIn = async () => {
         if (signInInProgress.current) return;
         signInInProgress.current = true;
+        setLoading(true);
 
         try {
-            setLoading(true);
-
             if (!walletProvider) {
                 throw new Error('No wallet provider');
             }
@@ -98,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const loginResponse = await loginWithWallet(walletAddress, signature, message);
 
             setUser({ address: walletAddress });
-
             const userProfile = await getProfile();
             setProfile({
                 ...userProfile,
@@ -106,19 +106,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 tier: loginResponse.user.tier
             });
 
-            setPendingSignIn(false);
+            // Clear any pending state
+            sessionStorage.removeItem(AUTH_PENDING_KEY);
 
         } catch (error: any) {
             const isUserRejection =
                 error.code === 4001 ||
                 error.code === 'ACTION_REJECTED' ||
-                error.message?.includes('rejected');
+                error.message?.includes('rejected') ||
+                error.message?.includes('cancelled');
 
             if (!isUserRejection) {
                 alert(`Login failed: ${error.message || 'Unknown error'}`);
             }
 
-            setPendingSignIn(false);
+            // Clear pending state on error
+            sessionStorage.removeItem(AUTH_PENDING_KEY);
         } finally {
             setLoading(false);
             signInInProgress.current = false;
@@ -128,20 +131,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signIn = async () => {
         if (user) return;
 
-        // Already connected - complete sign in
+        // Already connected - complete sign in immediately
         if (isConnected && walletProvider && address) {
             await completeSignIn();
             return;
         }
 
-        // Open AppKit modal
-        setPendingSignIn(true);
+        // Mark as pending BEFORE opening modal (crucial for mobile)
+        sessionStorage.setItem(AUTH_PENDING_KEY, 'true');
         setLoading(true);
 
         try {
             await open();
-        } catch {
-            setPendingSignIn(false);
+            // On mobile, the browser will pause here when switching to wallet app
+        } catch (error) {
+            sessionStorage.removeItem(AUTH_PENDING_KEY);
             setLoading(false);
         }
     };
@@ -150,12 +154,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         removeAuthToken();
         setUser(null);
         setProfile(null);
-        setPendingSignIn(false);
         signInInProgress.current = false;
+        sessionStorage.removeItem(AUTH_PENDING_KEY);
 
         try {
             await disconnect();
-
             if (typeof window !== 'undefined') {
                 Object.keys(localStorage).forEach(key => {
                     if (
