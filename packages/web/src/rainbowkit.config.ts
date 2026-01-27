@@ -12,5 +12,13 @@ export const config = getDefaultConfig({
     transports: {
         [linea.id]: http(),
     },
-    ssr: false, // Set true if using Next.js
+    ssr: false,
+    walletConnectParameters: {
+        metadata: {
+            name: 'FundTracer',
+            description: 'Trace with Precision. Scale with Confidence.',
+            url: 'https://fundtracer.xyz',
+            icons: ['https://fundtracer.xyz/logo.png'],
+        },
+    },
 });
