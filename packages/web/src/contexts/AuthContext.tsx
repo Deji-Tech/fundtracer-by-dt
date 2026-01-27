@@ -43,11 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [pendingSignIn, setPendingSignIn] = useState(false);
     const signInInProgress = useRef(false);
 
+    // AppKit hooks
     const { open } = useAppKit();
     const { address, isConnected } = useAppKitAccount();
     const { walletProvider } = useAppKitProvider('eip155');
     const { disconnect } = useDisconnect();
 
+    // Check existing auth on mount
     useEffect(() => {
         const token = getAuthToken();
         if (token) {
@@ -67,19 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // Handle connection state changes
     useEffect(() => {
-        if (pendingSignIn && isConnected && walletProvider && address && !signInInProgress.current) {
+        if (pendingSignIn && isConnected && walletProvider && address) {
             completeSignIn();
         }
-    }, [isConnected, walletProvider, address, pendingSignIn]);
-
-    const isMobile = (): boolean => {
-        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    };
-
-    const hasInjectedWallet = (): boolean => {
-        return typeof window !== 'undefined' && !!(window as any).ethereum;
-    };
+    }, [pendingSignIn, isConnected, walletProvider, address]);
 
     const completeSignIn = async () => {
         if (signInInProgress.current) return;
@@ -133,26 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signIn = async () => {
         if (user) return;
 
+        // Already connected - complete sign in
         if (isConnected && walletProvider && address) {
             await completeSignIn();
             return;
         }
 
-        if (isMobile() && !hasInjectedWallet()) {
-            const openInMetaMask = window.confirm(
-                'Open this site in MetaMask app?\n\n' +
-                'Tap OK to open MetaMask\n' +
-                'Tap Cancel to scan QR with any wallet'
-            );
-
-            if (openInMetaMask) {
-                const host = window.location.host;
-                const path = window.location.pathname;
-                window.location.href = `https://metamask.app.link/dapp/${host}${path}`;
-                return;
-            }
-        }
-
+        // Open AppKit modal
         setPendingSignIn(true);
         setLoading(true);
 
