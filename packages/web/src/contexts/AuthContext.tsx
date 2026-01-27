@@ -42,14 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [pendingSignIn, setPendingSignIn] = useState(false);
     const signInInProgress = useRef(false);
-    const hasTriedAutoLogin = useRef(false);
 
     const { open } = useAppKit();
-    const { address, isConnected, status } = useAppKitAccount();
+    const { address, isConnected } = useAppKitAccount();
     const { walletProvider } = useAppKitProvider('eip155');
     const { disconnect } = useDisconnect();
 
-    // Check for existing JWT auth on mount
     useEffect(() => {
         const token = getAuthToken();
         if (token) {
@@ -69,33 +67,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // Watch for wallet connection changes (handles return from wallet app)
     useEffect(() => {
-        // Skip if already logged in or not pending
-        if (user || !pendingSignIn) return;
-
-        // Wait for connected status with provider
-        if (isConnected && walletProvider && address && !signInInProgress.current) {
+        if (pendingSignIn && isConnected && walletProvider && address && !signInInProgress.current) {
             completeSignIn();
         }
-    }, [isConnected, walletProvider, address, pendingSignIn, user]);
+    }, [isConnected, walletProvider, address, pendingSignIn]);
 
-    // Auto-complete login if user returns to page already connected
-    useEffect(() => {
-        if (
-            !user &&
-            !loading &&
-            !hasTriedAutoLogin.current &&
-            isConnected &&
-            walletProvider &&
-            address &&
-            !getAuthToken()
-        ) {
-            hasTriedAutoLogin.current = true;
-            // User is connected but not logged in - they probably returned from wallet
-            setPendingSignIn(true);
-        }
-    }, [user, loading, isConnected, walletProvider, address]);
+    const isMobile = (): boolean => {
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    };
+
+    const hasInjectedWallet = (): boolean => {
+        return typeof window !== 'undefined' && !!(window as any).ethereum;
+    };
 
     const completeSignIn = async () => {
         if (signInInProgress.current) return;
@@ -133,8 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const isUserRejection =
                 error.code === 4001 ||
                 error.code === 'ACTION_REJECTED' ||
-                error.message?.includes('rejected') ||
-                error.message?.includes('denied');
+                error.message?.includes('rejected');
 
             if (!isUserRejection) {
                 alert(`Login failed: ${error.message || 'Unknown error'}`);
@@ -148,25 +131,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signIn = async () => {
-        // Already logged in
         if (user) return;
 
-        // Already connected - just need to sign
         if (isConnected && walletProvider && address) {
             await completeSignIn();
             return;
         }
 
-        // Set pending and open modal
+        if (isMobile() && !hasInjectedWallet()) {
+            const openInMetaMask = window.confirm(
+                'Open this site in MetaMask app?\n\n' +
+                'Tap OK to open MetaMask\n' +
+                'Tap Cancel to scan QR with any wallet'
+            );
+
+            if (openInMetaMask) {
+                const host = window.location.host;
+                const path = window.location.pathname;
+                window.location.href = `https://metamask.app.link/dapp/${host}${path}`;
+                return;
+            }
+        }
+
         setPendingSignIn(true);
         setLoading(true);
 
         try {
             await open();
-            // Modal is now open
-            // The useEffect watching isConnected will handle the rest
-            // when user connects their wallet
-        } catch (error) {
+        } catch {
             setPendingSignIn(false);
             setLoading(false);
         }
@@ -178,7 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setPendingSignIn(false);
         signInInProgress.current = false;
-        hasTriedAutoLogin.current = false;
 
         try {
             await disconnect();
