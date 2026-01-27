@@ -88,6 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
     }, []);
 
+    // Check if inside a wallet's in-app browser
+    const isWalletBrowser = useCallback((): boolean => {
+        const ethereum = (window as any).ethereum;
+        if (!ethereum) return false;
+        return !!(ethereum.isMetaMask || ethereum.isRabby || ethereum.isTrust || ethereum.isCoinbaseWallet);
+    }, []);
+
     const performLogin = useCallback(async (
         providerInput?: any,
         addressInput?: string
@@ -149,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [walletProvider]);
 
+    // Handle AppKit connection completing
     useEffect(() => {
         if (pendingSignIn && isConnected && walletProvider && address) {
             performLogin();
@@ -164,18 +172,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Small delay for provider injection (mainly for mobile)
-        await new Promise(r => setTimeout(r, 100));
-
-        const ethereum = getEthereumProvider();
         const mobile = isMobile();
+        const walletBrowser = isWalletBrowser();
+        const ethereum = getEthereumProvider();
 
-        // No injected provider - open AppKit modal
-        if (!ethereum) {
+        // CASE 1: Mobile browser WITHOUT wallet (regular Chrome/Safari)
+        // Must use AppKit modal for WalletConnect / deep linking
+        if (mobile && !walletBrowser && !ethereum) {
             setPendingSignIn(true);
             setLoading(true);
             try {
                 await open();
+                // Don't set loading false here - wait for connection via useEffect
             } catch {
                 setPendingSignIn(false);
                 setLoading(false);
@@ -183,20 +191,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // Already connected (common on mobile wallet browsers)
-        if (ethereum.selectedAddress) {
+        // CASE 2: Mobile wallet in-app browser (MetaMask/Rabby app)
+        if (mobile && ethereum) {
+            await new Promise(r => setTimeout(r, 100));
+
+            // Check if already connected
+            if (ethereum.selectedAddress) {
+                setLoading(true);
+                await performLogin(ethereum, ethereum.selectedAddress);
+                return;
+            }
+
             setLoading(true);
-            await performLogin(ethereum, ethereum.selectedAddress);
-            return;
-        }
 
-        setLoading(true);
+            try {
+                let accounts: string[] = [];
 
-        try {
-            let accounts: string[] = [];
-
-            if (mobile) {
-                // MOBILE: Try wallet_requestPermissions first (works better on some mobile wallets)
                 try {
                     await ethereum.request({
                         method: 'wallet_requestPermissions',
@@ -206,30 +216,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 } catch {
                     accounts = await ethereum.request({ method: 'eth_requestAccounts' });
                 }
-            } else {
-                // DESKTOP: Use eth_requestAccounts directly (triggers MetaMask popup)
-                accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-            }
 
-            if (accounts?.[0]) {
-                await performLogin(ethereum, accounts[0]);
-            } else {
+                if (accounts?.[0]) {
+                    await performLogin(ethereum, accounts[0]);
+                } else {
+                    setLoading(false);
+                }
+            } catch (error: any) {
                 setLoading(false);
-            }
-        } catch (error: any) {
-            setLoading(false);
 
-            if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
-                return;
-            }
+                if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+                    return;
+                }
 
-            // Fallback to AppKit modal
-            setPendingSignIn(true);
+                // Fallback to AppKit modal
+                setPendingSignIn(true);
+                try {
+                    await open();
+                } catch {
+                    setPendingSignIn(false);
+                }
+            }
+            return;
+        }
+
+        // CASE 3: Desktop browser with extension
+        if (!mobile && ethereum) {
+            setLoading(true);
+
             try {
-                await open();
-            } catch {
-                setPendingSignIn(false);
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+
+                if (accounts?.[0]) {
+                    await performLogin(ethereum, accounts[0]);
+                } else {
+                    setLoading(false);
+                }
+            } catch (error: any) {
+                setLoading(false);
+
+                if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
+                    return;
+                }
+
+                // Fallback to AppKit modal
+                setPendingSignIn(true);
+                try {
+                    await open();
+                } catch {
+                    setPendingSignIn(false);
+                }
             }
+            return;
+        }
+
+        // CASE 4: Desktop without extension - show modal
+        setPendingSignIn(true);
+        setLoading(true);
+        try {
+            await open();
+        } catch {
+            setPendingSignIn(false);
+            setLoading(false);
         }
     };
 
