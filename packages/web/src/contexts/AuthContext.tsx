@@ -7,12 +7,7 @@ import React, {
     useCallback,
     useRef
 } from 'react';
-import {
-    useAppKit,
-    useAppKitAccount,
-    useAppKitProvider,
-    useDisconnect
-} from '@reown/appkit/react';
+import { useAccount, useConnect, useDisconnect, useWalletClient } from 'wagmi';
 import { ethers } from 'ethers';
 import {
     getProfile,
@@ -42,20 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const signInInProgress = useRef(false);
 
-    // Reown hooks
-    const { open } = useAppKit();
-    const { address, isConnected } = useAppKitAccount();
-    const { walletProvider } = useAppKitProvider('eip155');
+    // Wagmi hooks
+    const { address, isConnected, connector } = useAccount();
+    const { connect, connectors } = useConnect();
     const { disconnect } = useDisconnect();
-
-    // Check for pending auth on mount (for mobile redirect recovery)
-    useEffect(() => {
-        const pendingAuth = sessionStorage.getItem(AUTH_PENDING_KEY);
-        if (pendingAuth && isConnected && walletProvider && address && !signInInProgress.current) {
-            sessionStorage.removeItem(AUTH_PENDING_KEY);
-            completeSignIn();
-        }
-    }, [isConnected, walletProvider, address]);
+    const { data: walletClient } = useWalletClient();
 
     // Check existing auth on mount
     useEffect(() => {
@@ -75,18 +61,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initAuth();
     }, []);
 
-    const completeSignIn = async () => {
+    const completeSignIn = useCallback(async () => {
         if (signInInProgress.current) return;
         signInInProgress.current = true;
         setLoading(true);
 
         try {
-            if (!walletProvider) {
-                throw new Error('No wallet provider');
+            if (!address) {
+                throw new Error('Wallet not connected');
             }
 
-            // Ethers v6 syntax - use BrowserProvider instead of Web3Provider
-            const provider = new ethers.BrowserProvider(walletProvider as any);
+            // Get provider from connector or window.ethereum
+            let provider: ethers.BrowserProvider;
+            if (connector && 'getProvider' in connector) {
+                const connectorProvider = await (connector as any).getProvider();
+                provider = new ethers.BrowserProvider(connectorProvider);
+            } else if (typeof window !== 'undefined' && (window as any).ethereum) {
+                provider = new ethers.BrowserProvider((window as any).ethereum);
+            } else {
+                throw new Error('No wallet provider available');
+            }
+
             const signer = await provider.getSigner();
             const walletAddress = await signer.getAddress();
 
@@ -122,27 +117,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
             signInInProgress.current = false;
         }
-    };
+    }, [address, connector]);
+
+    // Check for pending auth on mount (for mobile redirect recovery)
+    // Also handle automatic sign-in when wallet connects
+    useEffect(() => {
+        const pendingAuth = sessionStorage.getItem(AUTH_PENDING_KEY);
+        if (pendingAuth && isConnected && connector && address && !signInInProgress.current && !user) {
+            sessionStorage.removeItem(AUTH_PENDING_KEY);
+            completeSignIn();
+        }
+    }, [isConnected, connector, address, completeSignIn, user]);
 
     const signIn = async () => {
         if (user) return;
 
         // Already connected - complete sign in immediately
-        if (isConnected && walletProvider && address) {
+        if (isConnected && connector && address) {
             await completeSignIn();
             return;
         }
 
-        // Mark as pending BEFORE opening modal (crucial for mobile)
+        // Mark as pending BEFORE connecting (crucial for mobile)
         sessionStorage.setItem(AUTH_PENDING_KEY, 'true');
         setLoading(true);
 
         try {
-            await open();
+            // Try MetaMask first (best mobile support)
+            // Injected connector for MetaMask typically has id 'io.metamask' or 'metaMaskSDK'
+            const metaMaskConnector = connectors.find(c => 
+                c.id === 'io.metamask' || 
+                c.id === 'metaMaskSDK' ||
+                c.id === 'injected' ||
+                c.name?.toLowerCase().includes('metamask')
+            ) || connectors.find(c => c.id === 'injected') || connectors[0];
+
+            if (metaMaskConnector) {
+                connect({ connector: metaMaskConnector });
+            } else if (connectors.length > 0) {
+                // Fallback to first available connector
+                connect({ connector: connectors[0] });
+            } else {
+                throw new Error('No wallet connectors available');
+            }
 
             // Mobile fallback: if deep link doesn't trigger automatically, force it
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
+            if (isMobile && metaMaskConnector) {
                 setTimeout(() => {
                     const stillPending = sessionStorage.getItem(AUTH_PENDING_KEY);
                     if (stillPending && !isConnected) {
@@ -166,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem(AUTH_PENDING_KEY);
 
         try {
-            await disconnect();
+            disconnect();
 
             if (typeof window !== 'undefined') {
                 Object.keys(localStorage).forEach(key => {
@@ -175,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         key.startsWith('W3M_') ||
                         key.startsWith('@w3m/') ||
                         key.startsWith('@appkit/') ||
+                        key.startsWith('wagmi') ||
                         key.includes('walletconnect')
                     ) {
                         localStorage.removeItem(key);
@@ -193,12 +215,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const getSigner = useCallback(async (): Promise<ethers.JsonRpcSigner> => {
-        if (walletProvider) {
-            const provider = new ethers.BrowserProvider(walletProvider as any);
-            return provider.getSigner();
+        if (!address) {
+            throw new Error('Wallet not connected');
         }
-        throw new Error('Wallet not connected');
-    }, [walletProvider]);
+
+        // Get provider from connector or window.ethereum
+        let provider: ethers.BrowserProvider;
+        if (connector && 'getProvider' in connector) {
+            const connectorProvider = await (connector as any).getProvider();
+            provider = new ethers.BrowserProvider(connectorProvider);
+        } else if (typeof window !== 'undefined' && (window as any).ethereum) {
+            provider = new ethers.BrowserProvider((window as any).ethereum);
+        } else {
+            throw new Error('No wallet provider available');
+        }
+
+        return provider.getSigner();
+    }, [connector, address]);
 
     return (
         <AuthContext.Provider value={{

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { saveAlchemyKey, removeAlchemyKey } from '../api';
 import TerminalAnimation from './TerminalAnimation';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 interface AuthPanelProps {
     showApiKeyForm: boolean;
@@ -11,21 +10,16 @@ interface AuthPanelProps {
 
 function AuthPanel({ showApiKeyForm, setShowApiKeyForm }: AuthPanelProps) {
     const { user, profile, loading, signIn, signOut, refreshProfile } = useAuth();
-    const { openConnectModal } = useConnectModal();
 
     const [alchemyKeyInput, setAlchemyKeyInput] = useState('');
     const [alchemyKeyError, setAlchemyKeyError] = useState('');
     const [alchemyKeySaving, setAlchemyKeySaving] = useState(false);
 
     const handleSignIn = async () => {
-        if (openConnectModal) {
-            openConnectModal();
-        } else {
-            try {
-                await signIn();
-            } catch (error: any) {
-                console.error('Sign-in error:', error);
-            }
+        try {
+            await signIn();
+        } catch (error: any) {
+            console.error('Sign-in error:', error);
         }
     };
 
