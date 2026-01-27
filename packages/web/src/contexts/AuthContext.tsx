@@ -88,11 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
     }, []);
 
-    // Check if inside a wallet's in-app browser
     const isWalletBrowser = useCallback((): boolean => {
         const ethereum = (window as any).ethereum;
         if (!ethereum) return false;
         return !!(ethereum.isMetaMask || ethereum.isRabby || ethereum.isTrust || ethereum.isCoinbaseWallet);
+    }, []);
+
+    // Open MetaMask app directly via deep link
+    const openMetaMaskDeepLink = useCallback(() => {
+        const currentUrl = encodeURIComponent(window.location.href);
+
+        // MetaMask deep link format
+        const metamaskDeepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+
+        window.location.href = metamaskDeepLink;
     }, []);
 
     const performLogin = useCallback(async (
@@ -156,7 +165,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [walletProvider]);
 
-    // Handle AppKit connection completing
     useEffect(() => {
         if (pendingSignIn && isConnected && walletProvider && address) {
             performLogin();
@@ -166,7 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signIn = async () => {
         if (user) return;
 
-        // Already connected via AppKit
         if (isConnected && walletProvider && address) {
             await performLogin();
             return;
@@ -176,26 +183,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const walletBrowser = isWalletBrowser();
         const ethereum = getEthereumProvider();
 
-        // CASE 1: Mobile browser WITHOUT wallet (regular Chrome/Safari)
-        // Must use AppKit modal for WalletConnect / deep linking
+        // MOBILE: Regular browser (Chrome/Safari) - no wallet extension
         if (mobile && !walletBrowser && !ethereum) {
-            setPendingSignIn(true);
-            setLoading(true);
-            try {
-                await open();
-                // Don't set loading false here - wait for connection via useEffect
-            } catch {
-                setPendingSignIn(false);
-                setLoading(false);
-            }
+            // Directly open MetaMask via deep link instead of using AppKit modal
+            openMetaMaskDeepLink();
             return;
         }
 
-        // CASE 2: Mobile wallet in-app browser (MetaMask/Rabby app)
+        // MOBILE: Inside wallet browser (MetaMask/Rabby app)
         if (mobile && ethereum) {
             await new Promise(r => setTimeout(r, 100));
 
-            // Check if already connected
             if (ethereum.selectedAddress) {
                 setLoading(true);
                 await performLogin(ethereum, ethereum.selectedAddress);
@@ -228,19 +226,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (error.code === 4001 || error.code === 'ACTION_REJECTED') {
                     return;
                 }
-
-                // Fallback to AppKit modal
-                setPendingSignIn(true);
-                try {
-                    await open();
-                } catch {
-                    setPendingSignIn(false);
-                }
             }
             return;
         }
 
-        // CASE 3: Desktop browser with extension
+        // DESKTOP: With wallet extension
         if (!mobile && ethereum) {
             setLoading(true);
 
@@ -259,7 +249,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     return;
                 }
 
-                // Fallback to AppKit modal
                 setPendingSignIn(true);
                 try {
                     await open();
@@ -270,7 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        // CASE 4: Desktop without extension - show modal
+        // DESKTOP: No wallet extension - show modal
         setPendingSignIn(true);
         setLoading(true);
         try {

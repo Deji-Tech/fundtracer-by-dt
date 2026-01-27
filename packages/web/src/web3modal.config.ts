@@ -6,10 +6,11 @@ import { linea } from '@reown/appkit/networks';
 
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'f55ba487b823b0308e4621a87d4ebf76';
 
+// IMPORTANT: URL must exactly match your domain (no trailing slash)
 const metadata = {
     name: 'FundTracer',
     description: 'Trace with Precision. Scale with Confidence.',
-    url: typeof window !== 'undefined' ? window.location.origin : 'https://fundtracer.xyz',
+    url: 'https://fundtracer.xyz',
     icons: ['https://fundtracer.xyz/logo.png']
 };
 
@@ -37,6 +38,7 @@ export const appKit = createAppKit({
     enableInjected: true,
     enableEIP6963: true,
     enableCoinbase: true,
+    enableWalletConnect: true,
 });
 
 export { projectId };
