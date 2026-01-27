@@ -13,11 +13,7 @@
         "declaration": false,
         "declarationMap": false,
         "sourceMap": false,
-        "types": [
-            "node",
-            "express",
-            "cors"
-        ],
+        "sourceMap": false,
         "paths": {
             "@fundtracer/core": [
                 "../core/dist/index"
