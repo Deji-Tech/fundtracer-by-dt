@@ -1,5 +1,5 @@
 import { createAppKit } from '@reown/appkit/react'
-import { Ethers5Adapter } from '@reown/appkit-adapter-ethers5'
+import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { linea, mainnet, arbitrum } from '@reown/appkit/networks'
 
 // Get projectId from environment or use default
@@ -18,7 +18,7 @@ const metadata = {
 
 // Create the AppKit instance with all wallets enabled
 export const appKit = createAppKit({
-    adapters: [new Ethers5Adapter()],
+    adapters: [new EthersAdapter()],
     networks: networks,
     metadata,
     projectId,
