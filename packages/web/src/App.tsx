@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-const { parseEther } = ethers;
+// const { parseEther } = ethers; // Removed to prevent runtime crash in v6 if default export structure differs
 import { ChainId, AnalysisResult, MultiWalletResult, getEnabledChains, CHAINS } from '@fundtracer/core';
 import { useAuth } from './contexts/AuthContext';
 import { analyzeWallet, compareWallets, analyzeContract, loadMoreTransactions, trackVisit } from './api';
@@ -130,10 +130,13 @@ function App() {
         try {
             const signer = await getSigner();
             const provider = signer.provider; // This should be a Web3Provider
+            if (!provider) {
+                throw new Error("Provider not found");
+            }
 
-            // Check Chain ID (Ethers v5 uses BigNumber)
+            // Check Chain ID (Ethers v6 uses BigInt)
             const network = await provider.getNetwork();
-            if (!network.chainId.eq(59144)) {
+            if (network.chainId !== 59144n) {
                 // Try to switch network using underlying provider if possible
                 try {
                     // EIP-3326
