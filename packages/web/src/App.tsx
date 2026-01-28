@@ -131,9 +131,9 @@ function App() {
             const signer = await getSigner();
             const provider = signer.provider; // This should be a Web3Provider
 
-            // Check Chain ID
+            // Check Chain ID (Ethers v5 uses BigNumber)
             const network = await provider.getNetwork();
-            if (network.chainId !== BigInt(59144)) {
+            if (!network.chainId.eq(59144)) {
                 // Try to switch network using underlying provider if possible
                 try {
                     // EIP-3326
