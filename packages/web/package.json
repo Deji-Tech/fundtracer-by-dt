@@ -11,12 +11,11 @@
     "dependencies": {
         "@fundtracer/core": "*",
         "@reown/appkit": "^1.7.8",
-        "@reown/appkit-adapter-ethers5": "^1.8.17",
+        "@reown/appkit-adapter-ethers": "^1.8.17",
         "@tanstack/react-query": "^5.90.20",
         "@vitejs/plugin-react": "^4.2.1",
         "d3": "^7.8.5",
         "ethers": "^6.16.0",
-        "ethers5": "npm:ethers@^5.8.0",
         "firebase": "^10.7.1",
         "jspdf": "^4.0.0",
         "jspdf-autotable": "^5.0.7",

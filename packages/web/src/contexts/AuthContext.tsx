@@ -13,7 +13,7 @@ import {
     useAppKitProvider,
     useDisconnect
 } from '@reown/appkit/react';
-import { ethers } from 'ethers5';
+import { ethers } from 'ethers';
 import {
     getProfile,
     loginWithWallet,
@@ -76,9 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error('Wallet not connected');
             }
 
-            // Use Ethers v5 with the wallet provider
-            const provider = new ethers.providers.Web3Provider(walletProvider as any);
-            const signer = provider.getSigner();
+            // Use Ethers v6 with the wallet provider
+            const provider = new ethers.BrowserProvider(walletProvider as any);
+            const signer = await provider.getSigner();
             const walletAddress = await signer.getAddress();
 
             const timestamp = Date.now();
@@ -187,8 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error('Wallet not connected');
         }
 
-        // Use Ethers v5 with the wallet provider
-        const provider = new ethers.providers.Web3Provider(walletProvider as any);
+        // Use Ethers v6 with the wallet provider
+        const provider = new ethers.BrowserProvider(walletProvider as any);
         return provider.getSigner();
     }, [walletProvider, address]);
 
