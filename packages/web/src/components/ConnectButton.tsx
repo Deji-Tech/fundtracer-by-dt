@@ -1,8 +1,9 @@
-import { useAccount } from 'wagmi'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { useAuth } from '../contexts/AuthContext'
 
 export function ConnectButton() {
-    const { address, isConnected } = useAccount()
+    const { open } = useAppKit()
+    const { address, isConnected } = useAppKitAccount()
     const { user, signOut, signIn, loading } = useAuth()
 
     if (loading) {
